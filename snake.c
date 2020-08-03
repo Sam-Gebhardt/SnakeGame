@@ -27,7 +27,7 @@ typedef struct data {
 // function declerations
 char *head_of_the_snake(int direction_x, int direction_y);
 void random_int(int out[2], int max_x, int max_y);
-void move_snake(Node* snake, Data* lData, int direction_x, int direction_y);
+int move_snake(Node* snake, Data* lData, int direction_x, int direction_y);
 Node *create_snake(Data* lData, int max_x, int max_y);
 void grow_snake(Node* snake, Data* lData);
 // function declerations
@@ -63,7 +63,19 @@ void random_int(int out[2], int max_x, int max_y) {
 	out[1] = (rand() % max_y);
 }
 
-void move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
+int snake_collison(Data* lData) {
+	Node* node = lData->head->next;
+
+	while (node->next != NULL) {
+		if (node->x_cord == lData->head->x_cord && node->y_cord == lData->head->y_cord) {
+			return 1;  // snake tried to eat itself
+		}
+		node = node->next;
+	}
+	return 0;
+}
+
+int move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
 	// Replace the head car with a body char, move the head based on input, check if an apple was eaten,
 	// Move the head and remove tail
 
@@ -83,10 +95,16 @@ void move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
 	lData->tail->x_cord += direction_x;
 	lData->tail->y_cord += direction_y;
 
+	if (snake_collison(lData)) {
+		return 1;
+	}
+
+	return 0;
+
 }
 
 void grow_snake(Node* snake, Data* lData) {
-	Node* new = (Node*)malloc(sizeof(Node*));
+	Node* new = (Node*)malloc(sizeof(Node));
 
 	lData->tail->next = new;
 	new->prev = lData->tail;
@@ -101,8 +119,8 @@ void grow_snake(Node* snake, Data* lData) {
 
 Node *create_snake(Data* lData, int max_x, int max_y) {
 
-	Node *snake_body = (Node*)malloc(sizeof(Node*));
-	Node *snake_tail = (Node*)malloc(sizeof(Node*));
+	Node *snake_body = (Node*)malloc(sizeof(Node));
+	Node *snake_tail = (Node*)malloc(sizeof(Node));
 
 	snake_body->x_cord = max_x / 2;
 	snake_body->y_cord = max_y / 2;
@@ -135,7 +153,7 @@ int main() {
 
 
 	getmaxyx(stdscr, max_y, max_x);
-	Data* lData = (Data*)malloc(sizeof(Data*));
+	Data* lData = (Data*)malloc(sizeof(Data));
 	Node* snake = create_snake(lData, max_x, max_y);
 
 	lData->tail->x_cord = max_x / 2;
@@ -181,11 +199,17 @@ int main() {
 		}
 	
 		getmaxyx(stdscr, max_y, max_x);
-		// char *head = head_of_the_snake(direction_x, direction_y);
-		// mvprintw(y, x, head);
-		move_snake(snake, lData, direction_x, direction_y);
+		if (move_snake(snake, lData, direction_x, direction_y)) {
+			clear();
+			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
+			refresh();
+			getchar();
+			endwin();
+			return 0;
+		}
 
-		if ((x > max_x || x < 0) || (y > max_y || y < -1)) {
+		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
+		(lData->head->y_cord > max_y || lData->head->y_cord < -1)) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
@@ -195,8 +219,8 @@ int main() {
 			return 0;
 		}
 		
-		x += direction_x;
-		y += direction_y;
+		// x += direction_x;
+		// y += direction_y;
 
 		if (direction_y) {
 			usleep(150000);
