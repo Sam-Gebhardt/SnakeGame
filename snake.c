@@ -13,11 +13,25 @@ Basic terminal snake game
 typedef struct node {
 	struct node *next;
 	struct node *prev;
-	struct node *head;
-	struct node *tail;
 	int x_cord;
 	int y_cord;
 } Node;
+
+typedef struct data {
+	struct node *head;
+	struct node *tail;
+	int apple_x;
+	int apple_y;
+} Data;
+
+// function declerations
+char *head_of_the_snake(int direction_x, int direction_y);
+void random_int(int out[2], int max_x, int max_y);
+void move_snake(Node* snake, Data* lData, int direction_x, int direction_y);
+Node *create_snake(Data* lData, int max_x, int max_y);
+void grow_snake(Node* snake, Data* lData);
+// function declerations
+
 
 char *head_of_the_snake(int direction_x, int direction_y) {
 	char *head;
@@ -49,14 +63,54 @@ void random_int(int out[2], int max_x, int max_y) {
 	out[1] = (rand() % max_y);
 }
 
-// void add_node(struct *Node list, int x_cord, int y_cord) {
+void move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
+	// Replace the head car with a body char, move the head based on input, check if an apple was eaten,
+	//  Move the head and remove tail
 
-// }
+	mvprintw(lData->head->y_cord, lData->head->x_cord, "*");
+
+	lData->head->x_cord += direction_x;
+	lData->head->y_cord += direction_y;
+
+	if (lData->apple_x == lData->head->x_cord && lData->apple_y == lData->head->y_cord) {
+		grow_snake(snake, lData);
+	}
+	char *head = head_of_the_snake(direction_x, direction_y);
+	mvprintw(lData->head->y_cord, lData->head->x_cord, head);
+	mvprintw(lData->tail->y_cord, lData->tail->x_cord, " ");
+
+}
+
+void grow_snake(Node* snake, Data* lData) {
+	Node* new = (Node*)malloc(sizeof(Node*));
+
+	int x = lData->tail->x_cord;
+	int y = lData->tail->y_cord;
+
+	lData->tail->next = new;
+	new->prev = lData->tail;
+	new->next = NULL;
+	new->x_cord = lData->tail->x_cord - 1;
+	new->x_cord = lData->tail->y_cord;
+
+	lData->tail = new;
+
+}
 
 
-const Node *create_snake(void) {
+Node *create_snake(Data* lData, int max_x, int max_y) {
 
-	const Node *snake_body = (Node*)malloc(sizeof(Node*));
+	Node *snake_body = (Node*)malloc(sizeof(Node*));
+
+	snake_body->x_cord = max_x / 2;
+	snake_body->y_cord = max_y / 2;
+
+	snake_body->next = NULL;
+	snake_body->prev = NULL;
+
+	lData->head = snake_body;
+	lData->tail = snake_body;
+
 	return snake_body;
 }
 
@@ -66,23 +120,28 @@ int main() {
 	int direction_x = 1, direction_y = 0;
 	int uneaten_apple = 0;
 
+	getmaxyx(stdscr, max_y, max_x);
+	Data* lData = (Data*)malloc(sizeof(Data*));
+	Node* snake = create_snake(lData, max_x, max_y);
 
 	initscr();
 	noecho();  // no keyboard input
 	curs_set(FALSE);
 	keypad(stdscr, TRUE);
 
-	getmaxyx(stdscr, max_y, max_x);
 	mvprintw(max_y / 2 - 1, max_x  / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
 
 	x = max_x / 2;
 	y = max_y / 2;
 
-	snake = create_snake();
+	lData->head->x_cord = x;
+	lData->head->y_cord = y;
+
 	refresh();
-	getchar();
+	getchar();  // wait for user to press a key
 	nodelay(stdscr, true);
+	clear();
 
 	while(1) {
 
@@ -108,13 +167,12 @@ int main() {
 				return 0;
 		}
 	
-
-		refresh();
 		getmaxyx(stdscr, max_y, max_x);
-		char *head = head_of_the_snake(direction_x, direction_y);
-		mvprintw(y, x, head);
+		// char *head = head_of_the_snake(direction_x, direction_y);
+		// mvprintw(y, x, head);
+		move_snake(snake, lData, direction_x, direction_y);
 
-		if ((x > max_x || x < 0) || (y > max_y || y < 0)) {
+		if ((x > max_x || x < 0) || (y > max_y || y < -1)) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
@@ -136,9 +194,10 @@ int main() {
 			uneaten_apple = 1;
 			random_int(apple, max_x, max_y);
 			mvprintw(apple[1], apple[0], "@");
-			refresh();
-
+			lData->apple_x = apple[0];
+			lData->apple_y = apple[1];
 		}
+		refresh();
 
 	}
 	endwin();
