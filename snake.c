@@ -65,7 +65,7 @@ void random_int(int out[2], int max_x, int max_y) {
 
 void move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
 	// Replace the head car with a body char, move the head based on input, check if an apple was eaten,
-	//  Move the head and remove tail
+	// Move the head and remove tail
 
 	mvprintw(lData->head->y_cord, lData->head->x_cord, "*");
 
@@ -78,20 +78,21 @@ void move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
 	char *head = head_of_the_snake(direction_x, direction_y);
 	mvprintw(lData->head->y_cord, lData->head->x_cord, head);
 	mvprintw(lData->tail->y_cord, lData->tail->x_cord, " ");
+	refresh();
+
+	lData->tail->x_cord += direction_x;
+	lData->tail->y_cord += direction_y;
 
 }
 
 void grow_snake(Node* snake, Data* lData) {
 	Node* new = (Node*)malloc(sizeof(Node*));
 
-	int x = lData->tail->x_cord;
-	int y = lData->tail->y_cord;
-
 	lData->tail->next = new;
 	new->prev = lData->tail;
 	new->next = NULL;
 	new->x_cord = lData->tail->x_cord - 1;
-	new->x_cord = lData->tail->y_cord;
+	new->y_cord = lData->tail->y_cord;
 
 	lData->tail = new;
 
@@ -101,15 +102,22 @@ void grow_snake(Node* snake, Data* lData) {
 Node *create_snake(Data* lData, int max_x, int max_y) {
 
 	Node *snake_body = (Node*)malloc(sizeof(Node*));
+	Node *snake_tail = (Node*)malloc(sizeof(Node*));
 
 	snake_body->x_cord = max_x / 2;
 	snake_body->y_cord = max_y / 2;
 
-	snake_body->next = NULL;
+	snake_tail->x_cord = max_x / 2 - 1;
+	snake_tail->y_cord = max_y / 2;
+
+	snake_body->next = snake_tail;
 	snake_body->prev = NULL;
 
+	snake_tail->next = NULL;
+	snake_tail->prev = snake_body;
+
 	lData->head = snake_body;
-	lData->tail = snake_body;
+	lData->tail = snake_tail;
 
 	return snake_body;
 }
@@ -120,17 +128,22 @@ int main() {
 	int direction_x = 1, direction_y = 0;
 	int uneaten_apple = 0;
 
-	getmaxyx(stdscr, max_y, max_x);
-	Data* lData = (Data*)malloc(sizeof(Data*));
-	Node* snake = create_snake(lData, max_x, max_y);
-
 	initscr();
 	noecho();  // no keyboard input
 	curs_set(FALSE);
 	keypad(stdscr, TRUE);
 
-	mvprintw(max_y / 2 - 1, max_x  / 2 - 7, "Classic Snake");
+
+	getmaxyx(stdscr, max_y, max_x);
+	Data* lData = (Data*)malloc(sizeof(Data*));
+	Node* snake = create_snake(lData, max_x, max_y);
+
+	lData->tail->x_cord = max_x / 2;
+	lData->tail->y_cord = max_y / 2;
+
+	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
+	refresh();
 
 	x = max_x / 2;
 	y = max_y / 2;
