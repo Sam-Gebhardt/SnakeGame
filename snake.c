@@ -25,13 +25,27 @@ typedef struct data {
 } Data;
 
 // function declerations
+void cleanup(Data* lData);
 char *head_of_the_snake(int direction_x, int direction_y);
 void random_int(int out[2], int max_x, int max_y);
-int move_snake(Node* snake, Data* lData, int direction_x, int direction_y);
-Node *create_snake(Data* lData, int max_x, int max_y);
-void grow_snake(Node* snake, Data* lData);
+int move_snake(Data* lData, int direction_x, int direction_y);
+void create_snake(Data* lData, int max_x, int max_y);
+void grow_snake(Data* lData);
+void tail_direction(Data* lData);
 // function declerations
 
+
+void cleanup(Data* lData) {
+	Node* current = lData->head;
+	Node* next;
+
+	while (current != NULL) {
+		next = current->next;
+		free((void *)current);
+		current = next;
+	}
+	free(lData);
+}
 
 char *head_of_the_snake(int direction_x, int direction_y) {
 	char *head;
@@ -63,30 +77,43 @@ void random_int(int out[2], int max_x, int max_y) {
 	out[1] = (rand() % max_y);
 }
 
-int snake_collison(Data* lData) {
-	Node* node = lData->head->next;
+// int snake_collison(Data* lData) {
+// 	Node* node = lData->head->next;
 
-	while (node->next != NULL) {
-		if (node->x_cord == lData->head->x_cord && node->y_cord == lData->head->y_cord) {
-			return 1;  // snake tried to eat itself
-		}
-		node = node->next;
-	}
-	return 0;
-}
+// 	while (node->next != NULL) {
+// 		if (node->x_cord == lData->head->x_cord && node->y_cord == lData->head->y_cord) {
+// 			return 1;  // snake tried to eat itself
+// 		}
+// 		node = node->next;
+// 	}
+// 	return 0;
+// }
 
-int move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
+int move_snake(Data* lData, int direction_x, int direction_y) {
 	// Replace the head car with a body char, move the head based on input, check if an apple was eaten,
 	// Move the head and remove tail
+	Node* node = lData->head;
 
 	mvprintw(lData->head->y_cord, lData->head->x_cord, "*");
+	// mvprintw(lData->head->y_cord, lData->head->x_cord, "*");
 
-	lData->head->x_cord += direction_x;
-	lData->head->y_cord += direction_y;
+	while (node->next != NULL) {
+		node->x_cord += direction_x;
+		node->y_cord += direction_y;
 
-	if (lData->apple_x == lData->head->x_cord && lData->apple_y == lData->head->y_cord) {
-		grow_snake(snake, lData);
+		if (node == lData->head || node == lData->tail) {
+			node = node->next;
+			continue;
+		}
+		if (lData->head->x_cord == node->x_cord && lData->head->y_cord && node->y_cord) 
+			return 1;
+		if (lData->head->x_cord == lData->apple_x && lData->head->y_cord == lData->apple_y) {
+			grow_snake(lData);
+		} // dont want to do this each time
+	
+		node = node->next;
 	}
+
 	char *head = head_of_the_snake(direction_x, direction_y);
 	mvprintw(lData->head->y_cord, lData->head->x_cord, head);
 	mvprintw(lData->tail->y_cord, lData->tail->x_cord, " ");
@@ -95,15 +122,10 @@ int move_snake(Node* snake, Data* lData, int direction_x, int direction_y) {
 	lData->tail->x_cord += direction_x;
 	lData->tail->y_cord += direction_y;
 
-	if (snake_collison(lData)) {
-		return 1;
-	}
-
 	return 0;
-
 }
 
-void grow_snake(Node* snake, Data* lData) {
+void grow_snake(Data* lData) {
 	Node* new = (Node*)malloc(sizeof(Node));
 
 	lData->tail->next = new;
@@ -117,27 +139,25 @@ void grow_snake(Node* snake, Data* lData) {
 }
 
 
-Node *create_snake(Data* lData, int max_x, int max_y) {
+void create_snake(Data* lData, int max_x, int max_y) {
 
-	Node *snake_body = (Node*)malloc(sizeof(Node));
+	Node *snake_head = (Node*)malloc(sizeof(Node));
 	Node *snake_tail = (Node*)malloc(sizeof(Node));
 
-	snake_body->x_cord = max_x / 2;
-	snake_body->y_cord = max_y / 2;
+	snake_head->x_cord = max_x / 2;
+	snake_head->y_cord = max_y / 2;
 
 	snake_tail->x_cord = max_x / 2 - 1;
 	snake_tail->y_cord = max_y / 2;
 
-	snake_body->next = snake_tail;
-	snake_body->prev = NULL;
+	snake_head->next = snake_tail;
+	snake_head->prev = NULL;
 
 	snake_tail->next = NULL;
-	snake_tail->prev = snake_body;
+	snake_tail->prev = snake_head;
 
-	lData->head = snake_body;
+	lData->head = snake_head;
 	lData->tail = snake_tail;
-
-	return snake_body;
 }
 
 int main() {
@@ -151,10 +171,9 @@ int main() {
 	curs_set(FALSE);
 	keypad(stdscr, TRUE);
 
-
 	getmaxyx(stdscr, max_y, max_x);
 	Data* lData = (Data*)malloc(sizeof(Data));
-	Node* snake = create_snake(lData, max_x, max_y);
+	create_snake(lData, max_x, max_y);
 
 	lData->tail->x_cord = max_x / 2;
 	lData->tail->y_cord = max_y / 2;
@@ -198,29 +217,29 @@ int main() {
 				return 0;
 		}
 	
-		getmaxyx(stdscr, max_y, max_x);
-		if (move_snake(snake, lData, direction_x, direction_y)) {
-			clear();
-			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
-			refresh();
-			getchar();
-			endwin();
-			return 0;
-		}
+		getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
+
+		// if (move_snake(lData, direction_x, direction_y)) {
+		// 	clear();
+		// 	mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
+		// 	refresh();
+		// 	getchar();
+		// 	endwin();
+		// 	return 0;
+		// }
 
 		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
-		(lData->head->y_cord > max_y || lData->head->y_cord < -1)) {
+		(lData->head->y_cord > max_y || lData->head->y_cord < -1) || 
+		(move_snake(lData, direction_x, direction_y))) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
 			refresh();
 			getchar();
 			endwin();
+			cleanup(lData);
 			return 0;
 		}
-		
-		// x += direction_x;
-		// y += direction_y;
 
 		if (direction_y) {
 			usleep(150000);
@@ -263,3 +282,5 @@ Hold snake body in linked list?
 	checking if the snake ate itself by looping though ll
 		not ideal with O(n), but the only way I think
 */
+
+// TODO: add direction x/y to lData, turn into singly linked list
