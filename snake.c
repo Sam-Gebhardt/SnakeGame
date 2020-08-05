@@ -22,12 +22,14 @@ typedef struct data {
 	struct node *tail;
 	int apple_x;
 	int apple_y;
+	int apple;
 } Data;
 
 // function declerations
 void cleanup(Data* lData);
 char *head_of_the_snake(int direction_x, int direction_y);
-void random_int(int out[2], int max_x, int max_y);
+void random_int(Data* lData);
+void move_tail(Data* lData);
 int move_snake(Data* lData, int direction_x, int direction_y);
 void create_snake(Data* lData, int max_x, int max_y);
 void grow_snake(Data* lData);
@@ -70,79 +72,54 @@ char *head_of_the_snake(int direction_x, int direction_y) {
 }
 
 
-void random_int(int out[2], int max_x, int max_y) {
-	
+void random_int(Data* lData) {
+	int max_y, max_x;
+	getmaxyx(stdscr, max_y, max_x);
+
 	srand(time(NULL));
-	out[0] = (rand() % max_x);
-	out[1] = (rand() % max_y);
+	lData->apple_x = (rand() % max_x);
+	lData->apple_y = (rand() % max_y);
 }
 
-// int snake_collison(Data* lData) {
-// 	Node* node = lData->head->next;
 
-// 	while (node->next != NULL) {
-// 		if (node->x_cord == lData->head->x_cord && node->y_cord == lData->head->y_cord) {
-// 			return 1;  // snake tried to eat itself
-// 		}
-// 		node = node->next;
-// 	}
-// 	return 0;
-// }
+void move_tail(Data* lData) {
+
+}
+
 
 int move_snake(Data* lData, int direction_x, int direction_y) {
+	clear();
+	Node* current = lData->head;
+	char *letter;
 
-	Node* node = lData->head;
-	int grow = 0;
+	letter = head_of_the_snake(direction_x, direction_y);
+	current->x_cord += direction_x;
+	current->y_cord += direction_y;
+	mvprintw(current->y_cord, current->x_cord, letter);
 
-	while (node->next != NULL) {
-		if (node == lData->tail) {
-			lData->tail->x_cord = lData->tail->prev->x_cord - direction_x;
-			lData->tail->y_cord = lData->tail->prev->y_cord - direction_y;	
-		}
-		node->x_cord += direction_x;
-		node->y_cord += direction_y;
+	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
+		grow_snake(lData);
 
-		if (lData->head->x_cord == lData->apple_x && lData->head->y_cord == lData->apple_y) {
-			grow_snake(lData);
-			grow = 1;
+	current = current->next;
+	while (current != NULL) {
+		
+		if (current == lData->tail) {
+			current->x_cord = current->prev->x_cord - direction_x;
+			current->y_cord = current->prev->y_cord - direction_y;			
 			break;
 		}
-		if (node == lData->head) {
-			node = node->next;
-			continue;
-		}
-		if (lData->head->x_cord == node->x_cord && lData->head->y_cord == node->y_cord) 
-			return 1;
-	
-		node = node->next;
+		if (current->x_cord == lData->head->x_cord && current->y_cord == lData->head->y_cord)
+			return 1;			
+		
+		current->x_cord += direction_x;
+		current->y_cord += direction_y;
+		mvprintw(current->y_cord, current->x_cord, "*");
+
+		current = current->next;
 	}
-
-	char *head = head_of_the_snake(direction_x, direction_y);
-	mvprintw(lData->head->y_cord, lData->head->x_cord, head);
-	mvprintw(lData->tail->y_cord, lData->tail->x_cord, "  ");
-
-	if (grow) {
-
-		Node* current = lData->head;
-		char *letter = "*";
-
-		clear();
-		while (current != NULL) {
-			if (current == lData->tail)
-				break;
-			if (current == lData->head) 
-				letter = head;
-
-			// mvprintw(current->y_cord, current->x_cord, letter);
-			current = current->next;
-		}
-		refresh();
-	} else {
-		lData->tail->x_cord = lData->tail->prev->x_cord - direction_x;
-		lData->tail->y_cord = lData->tail->prev->y_cord - direction_y;
-	}
-
+	mvprintw(lData->apple_y, lData->apple_x, "@");
 	refresh();
+
 	return 0;
 }
 
@@ -161,6 +138,8 @@ void grow_snake(Data* lData) {
 	}
 	new->x_cord = lData->tail->prev->x_cord;
 	new->y_cord = lData->tail->prev->y_cord;
+
+	random_int(lData);
 
 	/*
 	Ideas: Insert after head, insert before tail
@@ -228,8 +207,7 @@ int main() {
 	clear();
 
 	while(1) {
-
-		int apple[2];
+		
 		int move = getch();
 
 		switch(move) {
@@ -273,10 +251,8 @@ int main() {
 		}
 		if (! uneaten_apple) {
 			uneaten_apple = 1;
-			random_int(apple, max_x, max_y);
-			mvprintw(apple[1], apple[0], "@");
-			lData->apple_x = apple[0];
-			lData->apple_y = apple[1];
+			random_int(lData);
+			mvprintw(lData->apple_y, lData->apple_x, "@");
 		}
 		refresh();
 
