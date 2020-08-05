@@ -32,7 +32,7 @@ void random_int(Data* lData);
 void move_tail(Data* lData);
 int move_snake(Data* lData, int direction_x, int direction_y);
 void create_snake(Data* lData, int max_x, int max_y);
-void grow_snake(Data* lData);
+void grow_snake(Data* lData, int direction_x, int direction_y);
 void tail_direction(Data* lData);
 // function declerations
 
@@ -82,9 +82,9 @@ void random_int(Data* lData) {
 }
 
 
-void move_tail(Data* lData) {
+// void move_tail(Data* lData) {
 
-}
+// }
 
 
 int move_snake(Data* lData, int direction_x, int direction_y) {
@@ -98,16 +98,11 @@ int move_snake(Data* lData, int direction_x, int direction_y) {
 	mvprintw(current->y_cord, current->x_cord, letter);
 
 	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
-		grow_snake(lData);
+		grow_snake(lData, direction_x, direction_y);
 
 	current = current->next;
 	while (current != NULL) {
 		
-		if (current == lData->tail) {
-			current->x_cord = current->prev->x_cord - direction_x;
-			current->y_cord = current->prev->y_cord - direction_y;			
-			break;
-		}
 		if (current->x_cord == lData->head->x_cord && current->y_cord == lData->head->y_cord)
 			return 1;			
 		
@@ -123,32 +118,27 @@ int move_snake(Data* lData, int direction_x, int direction_y) {
 	return 0;
 }
 
-void grow_snake(Data* lData) {
-	Node* new = (Node*)malloc(sizeof(Node));
+void grow_snake(Data* lData, int direction_x, int direction_y) {
 
 	if (lData->head == lData->tail->prev) {
-		lData->head->next = new;
-		lData->tail->prev = new;
+		lData->tail->x_cord -= direction_x;
+		lData->tail->y_cord -= direction_y;
 	} else {
-		Node* before = lData->tail->prev;
+		Node* new = (Node*)malloc(sizeof(Node));
+
 		// 1 2 3 4 - T
-		before->next = new;
-		new->prev = before;
-		lData->tail->prev = new;
-	}
-	new->x_cord = lData->tail->prev->x_cord;
-	new->y_cord = lData->tail->prev->y_cord;
+		lData->tail->next = new;
+		new->next = NULL;
+		new->prev = lData->tail;
+		lData->tail = new;
+	
+		// new->x_cord = lData->tail->prev->x_cord;
+		// new->y_cord = lData->tail->prev->y_cord;
+		new->x_cord = lData->tail->prev->x_cord - direction_x;
+		new->y_cord = lData->tail->prev->y_cord - direction_y;
+	}		
 
 	random_int(lData);
-
-	/*
-	Ideas: Insert after head, insert before tail
-		issues withe edge case: snake going toward border or itself
-		end makes more sense because of ^ issue
-		if it ends up ob or on itself it doesnt matter
-		*after eating an apple clear the screen to give it a chance to untangle*
-		*loop through list and redraw adding 1 to each element*
-	*/
 }
 
 
@@ -160,8 +150,8 @@ void create_snake(Data* lData, int max_x, int max_y) {
 	snake_head->x_cord = max_x / 2;
 	snake_head->y_cord = max_y / 2;
 
-	snake_tail->x_cord = max_x / 2 - 1;
-	snake_tail->y_cord = max_y / 2;
+	snake_tail->x_cord = -1;
+	snake_tail->y_cord = -1;
 
 	snake_head->next = snake_tail;
 	snake_head->prev = NULL;
