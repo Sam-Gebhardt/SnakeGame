@@ -90,52 +90,86 @@ void random_int(int out[2], int max_x, int max_y) {
 // }
 
 int move_snake(Data* lData, int direction_x, int direction_y) {
-	// Replace the head car with a body char, move the head based on input, check if an apple was eaten,
-	// Move the head and remove tail
-	Node* node = lData->head;
 
-	mvprintw(lData->head->y_cord, lData->head->x_cord, "*");
-	// mvprintw(lData->head->y_cord, lData->head->x_cord, "*");
+	Node* node = lData->head;
+	int grow = 0;
 
 	while (node->next != NULL) {
+		if (node == lData->tail) {
+			lData->tail->x_cord = lData->tail->prev->x_cord - direction_x;
+			lData->tail->y_cord = lData->tail->prev->y_cord - direction_y;	
+		}
 		node->x_cord += direction_x;
 		node->y_cord += direction_y;
 
-		if (node == lData->head || node == lData->tail) {
+		if (lData->head->x_cord == lData->apple_x && lData->head->y_cord == lData->apple_y) {
+			grow_snake(lData);
+			grow = 1;
+			break;
+		}
+		if (node == lData->head) {
 			node = node->next;
 			continue;
 		}
-		if (lData->head->x_cord == node->x_cord && lData->head->y_cord && node->y_cord) 
+		if (lData->head->x_cord == node->x_cord && lData->head->y_cord == node->y_cord) 
 			return 1;
-		if (lData->head->x_cord == lData->apple_x && lData->head->y_cord == lData->apple_y) {
-			grow_snake(lData);
-		} // dont want to do this each time
 	
 		node = node->next;
 	}
 
 	char *head = head_of_the_snake(direction_x, direction_y);
 	mvprintw(lData->head->y_cord, lData->head->x_cord, head);
-	mvprintw(lData->tail->y_cord, lData->tail->x_cord, " ");
+	mvprintw(lData->tail->y_cord, lData->tail->x_cord, "  ");
+
+	if (grow) {
+
+		Node* current = lData->head;
+		char *letter = "*";
+
+		clear();
+		while (current != NULL) {
+			if (current == lData->tail)
+				break;
+			if (current == lData->head) 
+				letter = head;
+
+			// mvprintw(current->y_cord, current->x_cord, letter);
+			current = current->next;
+		}
+		refresh();
+	} else {
+		lData->tail->x_cord = lData->tail->prev->x_cord - direction_x;
+		lData->tail->y_cord = lData->tail->prev->y_cord - direction_y;
+	}
+
 	refresh();
-
-	lData->tail->x_cord += direction_x;
-	lData->tail->y_cord += direction_y;
-
 	return 0;
 }
 
 void grow_snake(Data* lData) {
 	Node* new = (Node*)malloc(sizeof(Node));
 
-	lData->tail->next = new;
-	new->prev = lData->tail;
-	new->next = NULL;
-	new->x_cord = lData->tail->x_cord - 1;
-	new->y_cord = lData->tail->y_cord;
+	if (lData->head == lData->tail->prev) {
+		lData->head->next = new;
+		lData->tail->prev = new;
+	} else {
+		Node* before = lData->tail->prev;
+		// 1 2 3 4 - T
+		before->next = new;
+		new->prev = before;
+		lData->tail->prev = new;
+	}
+	new->x_cord = lData->tail->prev->x_cord;
+	new->y_cord = lData->tail->prev->y_cord;
 
-	lData->tail = new;
-
+	/*
+	Ideas: Insert after head, insert before tail
+		issues withe edge case: snake going toward border or itself
+		end makes more sense because of ^ issue
+		if it ends up ob or on itself it doesnt matter
+		*after eating an apple clear the screen to give it a chance to untangle*
+		*loop through list and redraw adding 1 to each element*
+	*/
 }
 
 
@@ -218,15 +252,6 @@ int main() {
 		}
 	
 		getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
-
-		// if (move_snake(lData, direction_x, direction_y)) {
-		// 	clear();
-		// 	mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
-		// 	refresh();
-		// 	getchar();
-		// 	endwin();
-		// 	return 0;
-		// }
 
 		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
 		(lData->head->y_cord > max_y || lData->head->y_cord < -1) || 
