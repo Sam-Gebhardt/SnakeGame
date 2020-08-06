@@ -31,11 +31,10 @@ typedef struct data {
 void cleanup(Data* lData);
 char *head_of_the_snake(Data* lData);
 void random_int(Data* lData);
-void move_tail(Data* lData);
+void update_direction(Data* lData);
 int move_snake(Data* lData);
-void create_snake(Data* lData, int max_x, int max_y);
 void grow_snake(Data* lData);
-void tail_direction(Data* lData);
+Data* create_snake(int max_x, int max_y);
 // function declerations
 
 
@@ -83,95 +82,57 @@ void random_int(Data* lData) {
 	lData->apple_y = (rand() % max_y);
 }
 
+void update_direction(Data* lData) {
+	Node* current = lData->head->next;
 
-// void move_tail(Data* lData) {
+	while (current != NULL) {
+		if (current->direction_x != current->prev->direction_x &&
+		 current->direction_y != current->prev->direction_y) {
 
-// }
-
-
-int move_snake(Data* lData) {
-	clear();
-	Node* current = lData->head;
-	char *letter;
-
-	letter = head_of_the_snake(lData);
-	current->x_cord += current->direction_x;
-	current->y_cord += current->direction_y;
-	mvprintw(current->y_cord, current->x_cord, letter);
-
-	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
-		grow_snake(lData);
-
-	current = current->next;
-	while (current != NULL) { 
-
-		if (current->x_cord == lData->head->x_cord && current->y_cord == lData->head->y_cord)
-			return 1;			
-		
-		mvprintw(current->y_cord, current->x_cord, "*");
-		current->x_cord += current->direction_x;
-		current->y_cord += current->direction_y;
+			 current->direction_x = current->prev->direction_x;
+			 current->direction_y = current->prev->direction_y;
+		 }
 
 		current = current->next;
 	}
-	mvprintw(lData->apple_y, lData->apple_x, "@");
-	refresh();
+}
+
+
+int move_snake(Data* lData) {
+	// mvprintw(10, 10, "x:%d, y:%d", lData->tail->x_cord, lData->tail->y_cord);
+	char *head = head_of_the_snake(lData);
+	mvprintw(lData->head->x_cord + lData->head->direction_x,
+	 lData->head->y_cord + lData->head->direction_y, head);
 
 	return 0;
 }
 
 void grow_snake(Data* lData) {
 
-	// if (lData->head == lData->tail->prev) {
-	// 	lData->tail->x_cord -= direction_x;
-	// 	lData->tail->y_cord -= direction_y;
-	// } else {
-		Node* new = (Node*)malloc(sizeof(Node));
+	// Node* new = (Node*)malloc(sizeof(Node));
 
-		// 1 2 3 4 - T
-		lData->tail->next = new;
-		new->next = NULL;
-		new->prev = lData->tail;
-		lData->tail = new;
-
-		new->direction_x = lData->tail->prev->direction_x;
-		new->direction_y = lData->tail->prev->direction_y;
 	
-		// new->x_cord = lData->tail->prev->x_cord;
-		// new->y_cord = lData->tail->prev->y_cord;
-		new->x_cord = lData->tail->prev->x_cord - new->direction_x;
-		new->y_cord = lData->tail->prev->y_cord - new->direction_y;
-	// }		
-
-	random_int(lData);
+	random_int(lData); // put another apple on the screen
 }
 
 
-void create_snake(Data* lData, int max_x, int max_y) {
+Data* create_snake(int max_x, int max_y) {
+	Node* head = (Node*)malloc(sizeof(Node));
+	Data* lData = (Data*)malloc(sizeof(Data));
 
-	Node *snake_head = (Node*)malloc(sizeof(Node));
-	Node *snake_tail = (Node*)malloc(sizeof(Node));
+	lData->head = head;
+	lData->tail = head;
 
-	snake_head->x_cord = max_x / 2;
-	snake_head->y_cord = max_y / 2;
+	head->direction_x = 1;
+	head->direction_y = 0;
 
-	snake_head->direction_x = 1;
-	snake_head->direction_y = 0;
+	head->x_cord = max_x / 2;
+	head->y_cord = max_y / 2;
 
-	snake_tail->direction_x = 1;
-	snake_head->direction_y = 0;
+	head->prev = NULL;
+	head->next = NULL;
 
-	snake_tail->x_cord = -1;
-	snake_tail->y_cord = -1;
-
-	snake_head->next = snake_tail;
-	snake_head->prev = NULL;
-
-	snake_tail->next = NULL;
-	snake_tail->prev = snake_head;
-
-	lData->head = snake_head;
-	lData->tail = snake_tail;
+	return lData;
 }
 
 int main() {
@@ -185,21 +146,10 @@ int main() {
 	keypad(stdscr, TRUE);
 
 	getmaxyx(stdscr, max_y, max_x);
-	Data* lData = (Data*)malloc(sizeof(Data));
-	create_snake(lData, max_x, max_y);
-
-	// lData->tail->x_cord = max_x / 2;
-	// lData->tail->y_cord = max_y / 2;
+	Data* lData = create_snake(max_x, max_y);
 
 	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
-	refresh();
-
-	// x = max_x / 2;
-	// y = max_y / 2;
-
-	// lData->head->x_cord = x;
-	// lData->head->y_cord = y;
 
 	refresh();
 	getchar();  // wait for user to press a key
@@ -209,25 +159,6 @@ int main() {
 	while(1) {
 		
 		int move = getch();
-
-		// switch(move) {
-		// 	case KEY_UP:
-		// 		direction_x = 0; direction_y = -1;
-		// 		break;
-		// 	case KEY_DOWN:
-		// 		direction_x = 0; direction_y = 1;
-		// 		break;
-		// 	case KEY_RIGHT:
-		// 		direction_x = 1; direction_y = 0;
-		// 		break;
-		// 	case KEY_LEFT:
-		// 		direction_x = -1; direction_y = 0;
-		// 		break;
-		// 	case 27:  // esc
-		// 		clear();
-		// 		endwin();
-		// 		return 0;
-		// }
 
 		switch(move) {
 			case KEY_UP:
