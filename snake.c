@@ -15,6 +15,8 @@ typedef struct node {
 	struct node *prev;
 	int x_cord;
 	int y_cord;
+	int direction_x;
+	int direction_y;
 } Node;
 
 typedef struct data {
@@ -27,12 +29,12 @@ typedef struct data {
 
 // function declerations
 void cleanup(Data* lData);
-char *head_of_the_snake(int direction_x, int direction_y);
+char *head_of_the_snake(Data* lData);
 void random_int(Data* lData);
 void move_tail(Data* lData);
-int move_snake(Data* lData, int direction_x, int direction_y);
+int move_snake(Data* lData);
 void create_snake(Data* lData, int max_x, int max_y);
-void grow_snake(Data* lData, int direction_x, int direction_y);
+void grow_snake(Data* lData);
 void tail_direction(Data* lData);
 // function declerations
 
@@ -49,10 +51,10 @@ void cleanup(Data* lData) {
 	free(lData);
 }
 
-char *head_of_the_snake(int direction_x, int direction_y) {
+char *head_of_the_snake(Data* lData) {
 	char *head;
 
-	switch(direction_x){
+	switch(lData->head->direction_x){
 		case 1:
 			head = ">";
 			break;
@@ -60,7 +62,7 @@ char *head_of_the_snake(int direction_x, int direction_y) {
 			head = "<";
 			break;
 	}
-	switch(direction_y) {
+	switch(lData->head->direction_y) {
 		case 1:
 			head = "v";
 			break;
@@ -87,28 +89,28 @@ void random_int(Data* lData) {
 // }
 
 
-int move_snake(Data* lData, int direction_x, int direction_y) {
+int move_snake(Data* lData) {
 	clear();
 	Node* current = lData->head;
 	char *letter;
 
-	letter = head_of_the_snake(direction_x, direction_y);
-	current->x_cord += direction_x;
-	current->y_cord += direction_y;
+	letter = head_of_the_snake(lData);
+	current->x_cord += current->direction_x;
+	current->y_cord += current->direction_y;
 	mvprintw(current->y_cord, current->x_cord, letter);
 
 	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
-		grow_snake(lData, direction_x, direction_y);
+		grow_snake(lData);
 
 	current = current->next;
-	while (current != NULL) {
-		
+	while (current != NULL) { 
+
 		if (current->x_cord == lData->head->x_cord && current->y_cord == lData->head->y_cord)
 			return 1;			
 		
-		current->x_cord += direction_x;
-		current->y_cord += direction_y;
 		mvprintw(current->y_cord, current->x_cord, "*");
+		current->x_cord += current->direction_x;
+		current->y_cord += current->direction_y;
 
 		current = current->next;
 	}
@@ -118,12 +120,12 @@ int move_snake(Data* lData, int direction_x, int direction_y) {
 	return 0;
 }
 
-void grow_snake(Data* lData, int direction_x, int direction_y) {
+void grow_snake(Data* lData) {
 
-	if (lData->head == lData->tail->prev) {
-		lData->tail->x_cord -= direction_x;
-		lData->tail->y_cord -= direction_y;
-	} else {
+	// if (lData->head == lData->tail->prev) {
+	// 	lData->tail->x_cord -= direction_x;
+	// 	lData->tail->y_cord -= direction_y;
+	// } else {
 		Node* new = (Node*)malloc(sizeof(Node));
 
 		// 1 2 3 4 - T
@@ -131,12 +133,15 @@ void grow_snake(Data* lData, int direction_x, int direction_y) {
 		new->next = NULL;
 		new->prev = lData->tail;
 		lData->tail = new;
+
+		new->direction_x = lData->tail->prev->direction_x;
+		new->direction_y = lData->tail->prev->direction_y;
 	
 		// new->x_cord = lData->tail->prev->x_cord;
 		// new->y_cord = lData->tail->prev->y_cord;
-		new->x_cord = lData->tail->prev->x_cord - direction_x;
-		new->y_cord = lData->tail->prev->y_cord - direction_y;
-	}		
+		new->x_cord = lData->tail->prev->x_cord - new->direction_x;
+		new->y_cord = lData->tail->prev->y_cord - new->direction_y;
+	// }		
 
 	random_int(lData);
 }
@@ -149,6 +154,12 @@ void create_snake(Data* lData, int max_x, int max_y) {
 
 	snake_head->x_cord = max_x / 2;
 	snake_head->y_cord = max_y / 2;
+
+	snake_head->direction_x = 1;
+	snake_head->direction_y = 0;
+
+	snake_tail->direction_x = 1;
+	snake_head->direction_y = 0;
 
 	snake_tail->x_cord = -1;
 	snake_tail->y_cord = -1;
@@ -165,8 +176,7 @@ void create_snake(Data* lData, int max_x, int max_y) {
 
 int main() {
 
-	int x, y, max_x, max_y;
-	int direction_x = 1, direction_y = 0;
+	int max_x, max_y;
 	int uneaten_apple = 0;
 
 	initscr();
@@ -178,18 +188,18 @@ int main() {
 	Data* lData = (Data*)malloc(sizeof(Data));
 	create_snake(lData, max_x, max_y);
 
-	lData->tail->x_cord = max_x / 2;
-	lData->tail->y_cord = max_y / 2;
+	// lData->tail->x_cord = max_x / 2;
+	// lData->tail->y_cord = max_y / 2;
 
 	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
 	refresh();
 
-	x = max_x / 2;
-	y = max_y / 2;
+	// x = max_x / 2;
+	// y = max_y / 2;
 
-	lData->head->x_cord = x;
-	lData->head->y_cord = y;
+	// lData->head->x_cord = x;
+	// lData->head->y_cord = y;
 
 	refresh();
 	getchar();  // wait for user to press a key
@@ -200,18 +210,41 @@ int main() {
 		
 		int move = getch();
 
+		// switch(move) {
+		// 	case KEY_UP:
+		// 		direction_x = 0; direction_y = -1;
+		// 		break;
+		// 	case KEY_DOWN:
+		// 		direction_x = 0; direction_y = 1;
+		// 		break;
+		// 	case KEY_RIGHT:
+		// 		direction_x = 1; direction_y = 0;
+		// 		break;
+		// 	case KEY_LEFT:
+		// 		direction_x = -1; direction_y = 0;
+		// 		break;
+		// 	case 27:  // esc
+		// 		clear();
+		// 		endwin();
+		// 		return 0;
+		// }
+
 		switch(move) {
 			case KEY_UP:
-				direction_x = 0; direction_y = -1;
+				lData->head->direction_x = 0; 
+				lData->head->direction_y = -1;
 				break;
 			case KEY_DOWN:
-				direction_x = 0; direction_y = 1;
+				lData->head->direction_x = 0; 
+				lData->head->direction_y = 1;
 				break;
 			case KEY_RIGHT:
-				direction_x = 1; direction_y = 0;
+				lData->head->direction_x = 1; 
+				lData->head->direction_y = 0;
 				break;
 			case KEY_LEFT:
-				direction_x = -1; direction_y = 0;
+				lData->head->direction_x = -1; 
+				lData->head->direction_y = 0;
 				break;
 			case 27:  // esc
 				clear();
@@ -223,7 +256,7 @@ int main() {
 
 		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
 		(lData->head->y_cord > max_y || lData->head->y_cord < -1) || 
-		(move_snake(lData, direction_x, direction_y))) {
+		(move_snake(lData))) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
@@ -234,7 +267,7 @@ int main() {
 			return 0;
 		}
 
-		if (direction_y) {
+		if (lData->head->direction_y) {
 			usleep(150000);
 		} else {
 			usleep(37500);
