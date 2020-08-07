@@ -99,19 +99,53 @@ void update_direction(Data* lData) {
 
 
 int move_snake(Data* lData) {
-	// mvprintw(10, 10, "x:%d, y:%d", lData->tail->x_cord, lData->tail->y_cord);
+	clear();
 	char *head = head_of_the_snake(lData);
-	mvprintw(lData->head->x_cord + lData->head->direction_x,
-	 lData->head->y_cord + lData->head->direction_y, head);
+	Node* current = lData->head;
+
+	current->x_cord += current->direction_x;
+	current->y_cord += current->direction_y;
+
+	mvprintw(current->y_cord, current->x_cord, head);
+	mvprintw(lData->apple_y, lData->apple_x, "@");
+
+	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y) 
+		grow_snake(lData);
+
+	current = current->next;
+	while (current != NULL) {
+
+		if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
+			return 1;
+
+		current->x_cord += current->direction_x;
+		current->y_cord += current->direction_y;
+		mvprintw(current->y_cord, current->x_cord, "*");
+		current = current->next;
+
+	}
+	refresh();
+		// return 0;
+	// }
 
 	return 0;
 }
 
 void grow_snake(Data* lData) {
+	// 1 2 3 N
+	Node* new = (Node*)malloc(sizeof(Node));
+	new->x_cord = lData->tail->x_cord - lData->tail->direction_x;
+	new->y_cord = lData->tail->y_cord - lData->tail->direction_y;
 
-	// Node* new = (Node*)malloc(sizeof(Node));
+	new->direction_x = lData->tail->direction_x;
+	new->direction_y = lData->tail->direction_y;
 
-	
+	new->next = NULL;
+	new->prev = lData->tail;
+
+	lData->tail->next = new;
+	lData->tail = new;
+
 	random_int(lData); // put another apple on the screen
 }
 
