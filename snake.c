@@ -31,6 +31,7 @@ typedef struct data {
 void cleanup(Data* lData);
 char *head_of_the_snake(Data* lData);
 void random_int(Data* lData);
+int reversed(Data* lData, int past_x, int past_y);
 void update_direction(Data* lData);
 int move_snake(Data* lData);
 void grow_snake(Data* lData);
@@ -82,6 +83,17 @@ void random_int(Data* lData) {
 	lData->apple_y = (rand() % max_y);
 }
 
+int reversed(Data* lData, int past_x, int past_y) {
+
+	if (lData->head->direction_x * -1 == past_x && past_x != 0) 
+		return 1;
+	
+	if (lData->head->direction_y * -1 == past_y && past_y != 0)
+		return 1;
+	
+	return 0;
+}
+
 void update_direction(Data* lData) {
 	Node* current = lData->head->next;
 
@@ -118,15 +130,13 @@ int move_snake(Data* lData) {
 		if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
 			return 1;
 
+		mvprintw(current->y_cord, current->x_cord, "*");
 		current->x_cord += current->direction_x;
 		current->y_cord += current->direction_y;
-		mvprintw(current->y_cord, current->x_cord, "*");
 		current = current->next;
 
 	}
 	refresh();
-		// return 0;
-	// }
 
 	return 0;
 }
@@ -193,35 +203,45 @@ int main() {
 	while(1) {
 		
 		int move = getch();
+		int change = 0;
+		int past_x = lData->head->direction_x;
+		int past_y = lData->head->direction_y;
 
 		switch(move) {
 			case KEY_UP:
 				lData->head->direction_x = 0; 
 				lData->head->direction_y = -1;
+				change = 1;
 				break;
 			case KEY_DOWN:
 				lData->head->direction_x = 0; 
 				lData->head->direction_y = 1;
+				change = 1;
 				break;
 			case KEY_RIGHT:
 				lData->head->direction_x = 1; 
 				lData->head->direction_y = 0;
+				change = 1;
 				break;
 			case KEY_LEFT:
 				lData->head->direction_x = -1; 
 				lData->head->direction_y = 0;
+				change = 1;
 				break;
 			case 27:  // esc
 				clear();
 				endwin();
+				cleanup(lData);
 				return 0;
 		}
-	
+		if (change) 
+			update_direction(lData);
+
 		getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
 
 		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
 		(lData->head->y_cord > max_y || lData->head->y_cord < -1) || 
-		(move_snake(lData))) {
+		(move_snake(lData)) || reversed(lData, past_x, past_y)) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
@@ -249,27 +269,3 @@ int main() {
 
 	return 0;
 }
-
-
-/*
-Game Loop:
-Start in middle of screen with direction (1, 0)
-Put "apple" on the screen for the snake to eat
-Take user input(3 cases)-
-	a. inbounds
-	b. out of bounds(border or snake itself)
-	c. ate apple
-
-a: update head of snake and move snake body
-b. Display "Game over" and score
-c. Increase score by 1 and snake body by 1
-
-Hold snake body in linked list?
-	doubly liked list-
-	allows movement in constent time(Move last * to the front)
-	add len by adding * after head of the snake
-	checking if the snake ate itself by looping though ll
-		not ideal with O(n), but the only way I think
-*/
-
-// TODO: add direction x/y to lData, turn into singly linked list
