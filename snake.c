@@ -88,7 +88,7 @@ int reversed(Data* lData, int past_x, int past_y) {
 	if (lData->head->direction_x * -1 == past_x && past_x != 0) 
 		return 1;
 	
-	if (lData->head->direction_y * -1 == past_y && past_y != 0)
+	if (lData->head->direction_y * -1 == past_y && past_y != 0 )
 		return 1;
 	
 	return 0;
@@ -109,8 +109,23 @@ void update_direction(Data* lData) {
 	}
 }
 
+void fix_direction(void) {
+	// Is smart enough to realize that it shouldn't immedaitly go in the direction,
+	// but well snake there, ideas:
+	// could maintain a :pivot: that holds direction, would be costly if the snake has lots of :pivots:
+	// could look for :change:, traverse ll and compare directions 
+	// here it is:
+	// start at the head and traverse downwards, if there is a difference in dir change it update it
+	// move through the rest of the ll, O(n) is not gteat and is starting to add up, currently at O(n^3) in total 
+	// but update_dir() could be modified to reduce back to n^2
+	// or this: 
+	// it works when size == 1, so apply same logic to each Node, ie each acts as a head to the prev
+	// node in the list, 
+}
+
 
 int move_snake(Data* lData) {
+
 	clear();
 	char *head = head_of_the_snake(lData);
 	Node* current = lData->head;
@@ -182,7 +197,6 @@ Data* create_snake(int max_x, int max_y) {
 int main() {
 
 	int max_x, max_y;
-	int uneaten_apple = 0;
 
 	initscr();
 	noecho();  // no keyboard input
@@ -199,6 +213,9 @@ int main() {
 	getchar();  // wait for user to press a key
 	nodelay(stdscr, true);
 	clear();
+
+	random_int(lData);
+	mvprintw(lData->apple_y, lData->apple_x, "@");
 
 	while(1) {
 		
@@ -234,6 +251,7 @@ int main() {
 				cleanup(lData);
 				return 0;
 		}
+
 		if (change) 
 			update_direction(lData);
 
@@ -252,16 +270,11 @@ int main() {
 			return 0;
 		}
 
-		if (lData->head->direction_y) {
+		if (lData->head->direction_y)
 			usleep(150000);
-		} else {
+		else 
 			usleep(37500);
-		}
-		if (! uneaten_apple) {
-			uneaten_apple = 1;
-			random_int(lData);
-			mvprintw(lData->apple_y, lData->apple_x, "@");
-		}
+
 		refresh();
 
 	}
