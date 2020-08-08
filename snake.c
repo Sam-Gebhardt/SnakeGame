@@ -17,6 +17,7 @@ typedef struct node {
 	int y_cord;
 	int direction_x;
 	int direction_y;
+	int pivot; // change in direction (causes "snake" effect)
 } Node;
 
 typedef struct data {
@@ -24,7 +25,6 @@ typedef struct data {
 	struct node *tail;
 	int apple_x;
 	int apple_y;
-	int apple;
 } Data;
 
 // function declerations
@@ -95,19 +95,22 @@ int reversed(Data* lData, int past_x, int past_y) {
 }
 
 void update_direction(Data* lData) {
-	Node* current = lData->head->next;
+	Node* second = lData->head->next;
 
-	while (current != NULL) {
-		if (current->direction_x != current->prev->direction_x &&
-		 current->direction_y != current->prev->direction_y) {
+	if (second != NULL && lData->head->direction_x != second->direction_x
+	 && lData->head->direction_y != second->direction_y) 
+		second->pivot = 1;
 
-			 current->direction_x = current->prev->direction_x;
-			 current->direction_y = current->prev->direction_y;
-		 }
-
-		current = current->next;
+	while (second != NULL) {
+		if (second->pivot && second->prev != NULL) {
+			second->direction_x = second->prev->direction_x;
+			second->direction_y = second->prev->direction_y;
+			second->pivot = 0;
+		}
+		second = second->next;
 	}
 }
+	
 
 void fix_direction(void) {
 	// Is smart enough to realize that it shouldn't immedaitly go in the direction,
@@ -121,6 +124,9 @@ void fix_direction(void) {
 	// or this: 
 	// it works when size == 1, so apply same logic to each Node, ie each acts as a head to the prev
 	// node in the list, 
+	// ^ won't work because the head is a special case, ie, body looks to head for direction, but past the 
+	// first element should look to the element before it for direction, 
+	// could: apply change in direction down the list one by one
 }
 
 
