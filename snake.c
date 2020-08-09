@@ -33,6 +33,7 @@ char *head_of_the_snake(Data* lData);
 void random_int(Data* lData);
 int reversed(Data* lData, int past_x, int past_y);
 void update_direction(Data* lData);
+void pivots(Data* lData, Node* current);
 int move_snake(Data* lData);
 void grow_snake(Data* lData);
 Data* create_snake(int max_x, int max_y);
@@ -95,38 +96,37 @@ int reversed(Data* lData, int past_x, int past_y) {
 }
 
 void update_direction(Data* lData) {
-	Node* second = lData->head->next;
+	if (lData->head->next == NULL)
+		return;
 
-	if (second != NULL && lData->head->direction_x != second->direction_x
-	 && lData->head->direction_y != second->direction_y) 
-		second->pivot = 1;
+	Node* current = lData->head->next->next; // the 3rd value will always be a pivot after movement
 
-	while (second != NULL) {
-		if (second->pivot && second->prev != NULL) {
-			second->direction_x = second->prev->direction_x;
-			second->direction_y = second->prev->direction_y;
-			second->pivot = 0;
-		}
-		second = second->next;
-	}
+	if (current == NULL)
+		return;
+	
+	current->pivot = 1;
+
+	if (lData->tail->pivot)
+		lData->tail->pivot = 0;
 }
 	
 
-void fix_direction(void) {
-	// Is smart enough to realize that it shouldn't immedaitly go in the direction,
-	// but well snake there, ideas:
-	// could maintain a :pivot: that holds direction, would be costly if the snake has lots of :pivots:
-	// could look for :change:, traverse ll and compare directions 
-	// here it is:
-	// start at the head and traverse downwards, if there is a difference in dir change it update it
-	// move through the rest of the ll, O(n) is not gteat and is starting to add up, currently at O(n^3) in total 
-	// but update_dir() could be modified to reduce back to n^2
-	// or this: 
-	// it works when size == 1, so apply same logic to each Node, ie each acts as a head to the prev
-	// node in the list, 
-	// ^ won't work because the head is a special case, ie, body looks to head for direction, but past the 
-	// first element should look to the element before it for direction, 
-	// could: apply change in direction down the list one by one
+void pivots(Data* lData, Node* current){
+
+	if (current == lData->head->next) {  // default behavior
+		mvprintw(current->y_cord, current->x_cord, "*");
+		current->x_cord += lData->head->direction_x;
+		current->y_cord += lData->head->direction_y;
+		return;
+	}
+
+	if (current->pivot) {
+		mvprintw(current->y_cord, current->x_cord, "*");
+		current->direction_x = current->prev->direction_x;
+		current->direction_y = current->prev->direction_y;
+		current->x_cord += current->direction_x;
+		current->y_cord += current->direction_y; 
+	}
 }
 
 
@@ -148,22 +148,26 @@ int move_snake(Data* lData) {
 	current = current->next;
 	while (current != NULL) {
 
-		if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y)
-			return 1;
+		// if (lData->head->x_cord == current->x_cord && lData->head->y_cord == current->y_cord)
+		// 	return 1;
 
-		mvprintw(current->y_cord, current->x_cord, "*");
-		current->x_cord += current->direction_x;
-		current->y_cord += current->direction_y;
+		// if (current->pivot)	{
+			pivots(lData, current);
+		// } else {
+		// 	mvprintw(current->y_cord, current->x_cord, "*");
+		// 	current->x_cord += current->prev->direction_x;
+		// 	current->y_cord += current->prev->direction_y;		
+		// }
+
 		current = current->next;
 
 	}
 	refresh();
-
 	return 0;
 }
 
 void grow_snake(Data* lData) {
-	// 1 2 3 N
+	
 	Node* new = (Node*)malloc(sizeof(Node));
 	new->x_cord = lData->tail->x_cord - lData->tail->direction_x;
 	new->y_cord = lData->tail->y_cord - lData->tail->direction_y;
@@ -258,7 +262,7 @@ int main() {
 				return 0;
 		}
 
-		if (change) 
+		if (change)
 			update_direction(lData);
 
 		getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
@@ -278,8 +282,10 @@ int main() {
 
 		if (lData->head->direction_y)
 			usleep(150000);
+			// sleep(1);
 		else 
 			usleep(37500);
+			// sleep(1);
 
 		refresh();
 
