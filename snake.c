@@ -96,36 +96,57 @@ int reversed(Data* lData, int past_x, int past_y) {
 }
 
 void update_direction(Data* lData) {
-	if (lData->head->next == NULL)
-		return;
+	// if (lData->head->next == NULL)
+	// 	return;
 
-	Node* current = lData->head->next->next; // the 3rd value will always be a pivot after movement
+	// Node* current = lData->head->next->next; // the 3rd value will always be a pivot after movement
 
-	if (current == NULL)
-		return;
-	
-	current->pivot = 1;
+	// if (current == NULL)
+	// 	return;
 
-	if (lData->tail->pivot)
-		lData->tail->pivot = 0;
+	// current->pivot = 1;
+
+	// if (lData->tail->pivot)
+	// 	lData->tail->pivot = 0;
+
+	if (lData->head->next != NULL) 
+		lData->head->next->pivot = 1;
 }
 	
 
 void pivots(Data* lData, Node* current){
 
-	if (current == lData->head->next) {  // default behavior
-		mvprintw(current->y_cord, current->x_cord, "*");
-		current->x_cord += lData->head->direction_x;
-		current->y_cord += lData->head->direction_y;
-		return;
-	}
+	
+	// if (current == lData->head->next) {  
+	// 	mvprintw(current->y_cord, current->x_cord, "*");
+	// 	current->x_cord += lData->head->direction_x;
+	// 	current->y_cord += lData->head->direction_y;
+	// 	current->direction_x = lData->head->direction_x;
+	// 	current->direction_y = lData->head->direction_y;
+	// 	return;
+	// }
 
-	if (current->pivot) {
+	if (current->pivot == 1){
+		mvprintw(current->y_cord, current->x_cord, "*");
+		current->x_cord += current->direction_x;
+		current->y_cord += current->direction_y; 
+		current->pivot += 1;
+
+	} else if (current->pivot == 2){
 		mvprintw(current->y_cord, current->x_cord, "*");
 		current->direction_x = current->prev->direction_x;
 		current->direction_y = current->prev->direction_y;
+
 		current->x_cord += current->direction_x;
 		current->y_cord += current->direction_y; 
+
+		current->pivot = 0;
+		if (current->next != NULL)
+			current->next->pivot = 1;
+	} else { //  if (! current->pivot)  // this one
+		mvprintw(current->y_cord, current->x_cord, "*");
+		current->x_cord += current->direction_x;
+		current->y_cord += current->direction_y;
 	}
 }
 
@@ -148,17 +169,7 @@ int move_snake(Data* lData) {
 	current = current->next;
 	while (current != NULL) {
 
-		// if (lData->head->x_cord == current->x_cord && lData->head->y_cord == current->y_cord)
-		// 	return 1;
-
-		// if (current->pivot)	{
-			pivots(lData, current);
-		// } else {
-		// 	mvprintw(current->y_cord, current->x_cord, "*");
-		// 	current->x_cord += current->prev->direction_x;
-		// 	current->y_cord += current->prev->direction_y;		
-		// }
-
+		pivots(lData, current);
 		current = current->next;
 
 	}
@@ -281,11 +292,12 @@ int main() {
 		}
 
 		if (lData->head->direction_y)
+			// usleep(1000000);
 			usleep(150000);
-			// sleep(1);
 		else 
 			usleep(37500);
-			// sleep(1);
+			// usleep(1000000);
+
 
 		refresh();
 
