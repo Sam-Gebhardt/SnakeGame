@@ -128,25 +128,38 @@ int move_snake(Data* lData, int change) {
 
 	current = current->next;
 	while (current != NULL) {
+		past_x = current->prev->direction_x;
+		past_y = current->prev->direction_y;
 
 		if (current != lData->head->next && ! current->pivot) {
+			x -= current->prev->direction_x;
+			y -= current->prev->direction_y;
+			current->x_cord += current->direction_x;
+			current->y_cord += current->direction_y;
+		} else if (current->pivot == 1) {
 			x -= current->direction_x;
 			y -= current->direction_y;
-		} else if (current->pivot) {
-			x -= current->direction_x;
-			y -= current->direction_y;
-			current->direction_x = current->prev->direction_x;
-			current->direction_y = current->prev->direction_y;
+			current->direction_x = past_x;
+			current->direction_y = past_y;
+			current->pivot ++;
+		} else if (current->pivot == 2) {
+			x -= current->prev->direction_x;
+			y -= current->prev->direction_y;
+			current->direction_x = past_x;
+			current->direction_y = past_y;
 			current->pivot = 0;
-			
 			if (current->next != NULL)
 				current->next->pivot = 1;
-		} // so close, just need body to have same behavior
-
+		}
+		/*
+		TODO: 
+		Change in directions arent perfect 90 degress
+		moving parrell to the body shifts the whole snake up/down
+		*/
 
 		mvprintw(y, x, "*");
-		current->direction_x = current->prev->direction_x;
-		current->direction_y = current->prev->direction_y;
+		// current->direction_x = current->prev->direction_x;
+		// current->direction_y = current->prev->direction_y;
 
 		current = current->next;
 
