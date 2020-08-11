@@ -34,7 +34,7 @@ void random_int(Data* lData);
 int reversed(Data* lData, int past_x, int past_y);
 void update_direction(Data* lData);
 void pivots(Data* lData, Node* current);
-int move_snake(Data* lData);
+int move_snake(Data* lData, int change);
 void grow_snake(Data* lData);
 Data* create_snake(int max_x, int max_y);
 // function declerations
@@ -96,66 +96,26 @@ int reversed(Data* lData, int past_x, int past_y) {
 }
 
 void update_direction(Data* lData) {
-	// if (lData->head->next == NULL)
-	// 	return;
 
-	// Node* current = lData->head->next->next; // the 3rd value will always be a pivot after movement
-
-	// if (current == NULL)
-	// 	return;
-
-	// current->pivot = 1;
-
-	// if (lData->tail->pivot)
-	// 	lData->tail->pivot = 0;
-
-	if (lData->head->next != NULL) 
-		lData->head->next->pivot = 1;
-}
+	if (lData->head->next == NULL)
+		return;
 	
+	lData->head->next->direction_x = lData->head->direction_x;
+	lData->head->next->direction_y = lData->head->direction_y;
 
-void pivots(Data* lData, Node* current){
-
-	
-	// if (current == lData->head->next) {  
-	// 	mvprintw(current->y_cord, current->x_cord, "*");
-	// 	current->x_cord += lData->head->direction_x;
-	// 	current->y_cord += lData->head->direction_y;
-	// 	current->direction_x = lData->head->direction_x;
-	// 	current->direction_y = lData->head->direction_y;
-	// 	return;
-	// }
-
-	if (current->pivot == 1){
-		mvprintw(current->y_cord, current->x_cord, "*");
-		current->x_cord += current->direction_x;
-		current->y_cord += current->direction_y; 
-		current->pivot += 1;
-
-	} else if (current->pivot == 2){
-		mvprintw(current->y_cord, current->x_cord, "*");
-		current->direction_x = current->prev->direction_x;
-		current->direction_y = current->prev->direction_y;
-
-		current->x_cord += current->direction_x;
-		current->y_cord += current->direction_y; 
-
-		current->pivot = 0;
-		if (current->next != NULL)
-			current->next->pivot = 1;
-	} else { //  if (! current->pivot)  // this one
-		mvprintw(current->y_cord, current->x_cord, "*");
-		current->x_cord += current->direction_x;
-		current->y_cord += current->direction_y;
+	if (lData->head->next->next != NULL) {
+		lData->head->next->next->pivot = 1;
 	}
 }
 
 
-int move_snake(Data* lData) {
+int move_snake(Data* lData, int change) {
 
 	clear();
 	char *head = head_of_the_snake(lData);
 	Node* current = lData->head;
+	int x = lData->head->x_cord, y = lData->head->y_cord;
+	int past_x, past_y;
 
 	current->x_cord += current->direction_x;
 	current->y_cord += current->direction_y;
@@ -169,7 +129,25 @@ int move_snake(Data* lData) {
 	current = current->next;
 	while (current != NULL) {
 
-		pivots(lData, current);
+		if (current != lData->head->next && ! current->pivot) {
+			x -= current->direction_x;
+			y -= current->direction_y;
+		} else if (current->pivot) {
+			x -= current->direction_x;
+			y -= current->direction_y;
+			current->direction_x = current->prev->direction_x;
+			current->direction_y = current->prev->direction_y;
+			current->pivot = 0;
+			
+			if (current->next != NULL)
+				current->next->pivot = 1;
+		} // so close, just need body to have same behavior
+
+
+		mvprintw(y, x, "*");
+		current->direction_x = current->prev->direction_x;
+		current->direction_y = current->prev->direction_y;
+
 		current = current->next;
 
 	}
@@ -280,7 +258,7 @@ int main() {
 
 		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
 		(lData->head->y_cord > max_y || lData->head->y_cord < -1) || 
-		(move_snake(lData)) || reversed(lData, past_x, past_y)) {
+		(move_snake(lData, change)) || reversed(lData, past_x, past_y)) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
@@ -292,12 +270,10 @@ int main() {
 		}
 
 		if (lData->head->direction_y)
-			// usleep(1000000);
 			usleep(150000);
+
 		else 
 			usleep(37500);
-			// usleep(1000000);
-
 
 		refresh();
 
