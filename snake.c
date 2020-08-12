@@ -4,7 +4,6 @@ Basic terminal snake game
 */
 
 #include <stdio.h>
-// #include <sys/ioctl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ncurses.h>
@@ -28,19 +27,19 @@ typedef struct data {
 } Data;
 
 // function declerations
-void cleanup(Data* lData);
+void free_list(Data* lData);
 char *head_of_the_snake(Data* lData);
-void random_int(Data* lData);
-int reversed(Data* lData, int past_x, int past_y);
+void gen_apple(Data* lData);
+int backwards(Data* lData, int past_x, int past_y);
 void update_direction(Data* lData);
-void pivots(Data* lData, Node* current);
-int move_snake(Data* lData, int change);
+int move_snake(Data* lData);
 void grow_snake(Data* lData);
+int collison(Data* lData, int past_x, int past_y);
 Data* create_snake(int max_x, int max_y);
 // function declerations
 
 
-void cleanup(Data* lData) {
+void free_list(Data* lData) {
 	Node* current = lData->head;
 	Node* next;
 
@@ -75,7 +74,7 @@ char *head_of_the_snake(Data* lData) {
 }
 
 
-void random_int(Data* lData) {
+void gen_apple(Data* lData) {
 	int max_y, max_x;
 	getmaxyx(stdscr, max_y, max_x);
 
@@ -84,7 +83,7 @@ void random_int(Data* lData) {
 	lData->apple_y = (rand() % max_y);
 }
 
-int reversed(Data* lData, int past_x, int past_y) {
+int backwards(Data* lData, int past_x, int past_y) {
 
 	if (lData->head->direction_x * -1 == past_x && past_x != 0) 
 		return 1;
@@ -109,7 +108,7 @@ void update_direction(Data* lData) {
 }
 
 
-int move_snake(Data* lData, int change) {
+int move_snake(Data* lData) {
 
 	clear();
 	char *head = head_of_the_snake(lData);
@@ -158,9 +157,6 @@ int move_snake(Data* lData, int change) {
 		*/
 
 		mvprintw(y, x, "*");
-		// current->direction_x = current->prev->direction_x;
-		// current->direction_y = current->prev->direction_y;
-
 		current = current->next;
 
 	}
@@ -183,9 +179,18 @@ void grow_snake(Data* lData) {
 	lData->tail->next = new;
 	lData->tail = new;
 
-	random_int(lData); // put another apple on the screen
+	gen_apple(lData); // put another apple on the screen
 }
 
+int collion(Data* lData, int past_x, int past_y) {
+	// check to see if the move is valid
+	int max_x, max_y;
+	getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
+	//todo: remove past with a loop over current cords
+	return lData->head->x_cord > max_x || lData->head->x_cord < 0 || 
+		lData->head->y_cord > max_y || lData->head->y_cord < -1 || 
+		move_snake(lData) || backwards(lData, past_x, past_y);
+}
 
 Data* create_snake(int max_x, int max_y) {
 	Node* head = (Node*)malloc(sizeof(Node));
@@ -226,7 +231,7 @@ int main() {
 	nodelay(stdscr, true);
 	clear();
 
-	random_int(lData);
+	gen_apple(lData);
 	mvprintw(lData->apple_y, lData->apple_x, "@");
 
 	while(1) {
@@ -260,25 +265,21 @@ int main() {
 			case 27:  // esc
 				clear();
 				endwin();
-				cleanup(lData);
+				free_list(lData);
 				return 0;
 		}
 
 		if (change)
 			update_direction(lData);
 
-		getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
-
-		if ((lData->head->x_cord > max_x || lData->head->x_cord < 0) || //fix
-		(lData->head->y_cord > max_y || lData->head->y_cord < -1) || 
-		(move_snake(lData, change)) || reversed(lData, past_x, past_y)) {
+		if (collion(lData, past_x, past_y)) {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
 			refresh();
 			getchar();
 			endwin();
-			cleanup(lData);
+			free_list(lData);
 			return 0;
 		}
 
