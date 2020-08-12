@@ -22,6 +22,7 @@ typedef struct node {
 typedef struct data {
 	struct node *head;
 	struct node *tail;
+	int score; 
 	int apple_x;
 	int apple_y;
 } Data;
@@ -114,21 +115,22 @@ void move_snake(Data* lData) {
 	char *head = head_of_the_snake(lData);
 	Node* current = lData->head;
 	int x = lData->head->x_cord, y = lData->head->y_cord;
-	int past_x, past_y;
+	int max_x;
+
+	max_x = getmaxx(stdscr);
 
 	current->x_cord += current->direction_x;
 	current->y_cord += current->direction_y;
 
 	mvprintw(current->y_cord, current->x_cord, head);
 	mvprintw(lData->apple_y, lData->apple_x, "@");
+	mvprintw(0, max_x - 1, "%d", lData->score); // current score
 
 	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y) 
 		grow_snake(lData);
 
 	current = current->next;
 	while (current != NULL) {
-		past_x = current->prev->direction_x;
-		past_y = current->prev->direction_y;
 
 		if (current != lData->head->next && ! current->pivot) {
 			x -= current->prev->direction_x;
@@ -138,14 +140,16 @@ void move_snake(Data* lData) {
 		} else if (current->pivot == 1) {
 			x -= current->direction_x;
 			y -= current->direction_y;
-			current->direction_x = past_x;
-			current->direction_y = past_y;
+			current->x_cord += current->direction_x;
+			current->y_cord += current->direction_y;
 			current->pivot ++;
 		} else if (current->pivot == 2) {
 			x -= current->prev->direction_x;
 			y -= current->prev->direction_y;
-			current->direction_x = past_x;
-			current->direction_y = past_y;
+			current->x_cord += current->prev->direction_x;
+			current->y_cord += current->prev->direction_y;
+			current->direction_x = current->prev->direction_x;
+			current->direction_y = current->prev->direction_y;
 			current->pivot = 0;
 			if (current->next != NULL)
 				current->next->pivot = 1;
@@ -177,6 +181,7 @@ void grow_snake(Data* lData) {
 
 	lData->tail->next = new;
 	lData->tail = new;
+	lData->score ++;
 
 	gen_apple(lData); // put another apple on the screen
 }
@@ -184,8 +189,18 @@ void grow_snake(Data* lData) {
 int collion(Data* lData, int past_x, int past_y) {
 	// check to see if the move is valid
 	int max_x, max_y;
+	Node* head = lData->head;
+	Node* current = lData->head->next;
+
 	getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
-	//todo: remove past with a loop over current cords
+
+	while (current != NULL) {
+		if (current->x_cord == head->x_cord && current->y_cord == head->y_cord)
+			return 1;
+
+		current = current->next;
+	}
+
 	return lData->head->x_cord > max_x || lData->head->x_cord < 0 || 
 		lData->head->y_cord > max_y || lData->head->y_cord < -1 || 
 		backwards(lData, past_x, past_y);
@@ -197,6 +212,7 @@ Data* create_snake(int max_x, int max_y) {
 
 	lData->head = head;
 	lData->tail = head;
+	lData->score = 0;
 
 	head->direction_x = 1;
 	head->direction_y = 0;
@@ -281,6 +297,7 @@ int main() {
 
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
+			mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
 			refresh();
 			getchar();
 			endwin();
@@ -301,3 +318,5 @@ int main() {
 
 	return 0;
 }
+
+//TODO: add highscore w/ persistant memory
