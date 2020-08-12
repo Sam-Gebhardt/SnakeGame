@@ -32,7 +32,7 @@ char *head_of_the_snake(Data* lData);
 void gen_apple(Data* lData);
 int backwards(Data* lData, int past_x, int past_y);
 void update_direction(Data* lData);
-int move_snake(Data* lData);
+void move_snake(Data* lData);
 void grow_snake(Data* lData);
 int collison(Data* lData, int past_x, int past_y);
 Data* create_snake(int max_x, int max_y);
@@ -108,7 +108,7 @@ void update_direction(Data* lData) {
 }
 
 
-int move_snake(Data* lData) {
+void move_snake(Data* lData) {
 
 	clear();
 	char *head = head_of_the_snake(lData);
@@ -161,7 +161,6 @@ int move_snake(Data* lData) {
 
 	}
 	refresh();
-	return 0;
 }
 
 void grow_snake(Data* lData) {
@@ -189,7 +188,7 @@ int collion(Data* lData, int past_x, int past_y) {
 	//todo: remove past with a loop over current cords
 	return lData->head->x_cord > max_x || lData->head->x_cord < 0 || 
 		lData->head->y_cord > max_y || lData->head->y_cord < -1 || 
-		move_snake(lData) || backwards(lData, past_x, past_y);
+		backwards(lData, past_x, past_y);
 }
 
 Data* create_snake(int max_x, int max_y) {
@@ -242,21 +241,25 @@ int main() {
 		int past_y = lData->head->direction_y;
 
 		switch(move) {
+			case 'w':
 			case KEY_UP:
 				lData->head->direction_x = 0; 
 				lData->head->direction_y = -1;
 				change = 1;
 				break;
+			case 's':
 			case KEY_DOWN:
 				lData->head->direction_x = 0; 
 				lData->head->direction_y = 1;
 				change = 1;
 				break;
+			case 'd':
 			case KEY_RIGHT:
 				lData->head->direction_x = 1; 
 				lData->head->direction_y = 0;
 				change = 1;
 				break;
+			case 'a':
 			case KEY_LEFT:
 				lData->head->direction_x = -1; 
 				lData->head->direction_y = 0;
@@ -271,6 +274,8 @@ int main() {
 
 		if (change)
 			update_direction(lData);
+		
+		move_snake(lData);
 
 		if (collion(lData, past_x, past_y)) {
 
