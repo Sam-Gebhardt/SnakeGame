@@ -124,7 +124,7 @@ void move_snake(Data* lData) {
 
 	mvprintw(current->y_cord, current->x_cord, head);
 	mvprintw(lData->apple_y, lData->apple_x, "@");
-	mvprintw(0, max_x - 1, "%d", lData->score); // current score
+	mvprintw(0, max_x - 3, "%d", lData->score); // current score
 
 	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y) 
 		grow_snake(lData);
@@ -135,8 +135,8 @@ void move_snake(Data* lData) {
 		if (current != lData->head->next && ! current->pivot) {
 			x -= current->prev->direction_x;
 			y -= current->prev->direction_y;
-			current->x_cord += current->direction_x;
-			current->y_cord += current->direction_y;
+			current->x_cord = x;
+			current->y_cord = y;
 		} else if (current->pivot == 1) {
 			x -= current->direction_x;
 			y -= current->direction_y;
@@ -146,14 +146,15 @@ void move_snake(Data* lData) {
 		} else if (current->pivot == 2) {
 			x -= current->prev->direction_x;
 			y -= current->prev->direction_y;
-			current->x_cord += current->prev->direction_x;
-			current->y_cord += current->prev->direction_y;
+			current->x_cord = x;
+			current->y_cord = y;
 			current->direction_x = current->prev->direction_x;
 			current->direction_y = current->prev->direction_y;
 			current->pivot = 0;
 			if (current->next != NULL)
 				current->next->pivot = 1;
 		}
+
 		/*
 		TODO: 
 		Change in directions arent perfect 90 degress
@@ -195,14 +196,20 @@ int collion(Data* lData, int past_x, int past_y) {
 	getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
 
 	while (current != NULL) {
+
+		if (current == lData->head->next) {
+			current = current->next;
+			continue;
+		}
+
 		if (current->x_cord == head->x_cord && current->y_cord == head->y_cord)
 			return 1;
 
 		current = current->next;
 	}
 
-	return lData->head->x_cord > max_x || lData->head->x_cord < 0 || 
-		lData->head->y_cord > max_y || lData->head->y_cord < -1 || 
+	return lData->head->x_cord >= max_x || lData->head->x_cord < 0 || 
+		lData->head->y_cord >= max_y || lData->head->y_cord < 0 || 
 		backwards(lData, past_x, past_y);
 }
 
