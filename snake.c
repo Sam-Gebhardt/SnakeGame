@@ -76,12 +76,30 @@ char *head_of_the_snake(Data* lData) {
 
 
 void gen_apple(Data* lData) {
-	int max_y, max_x;
+	Node* current = lData->head->next;
+	int max_y, max_x, repick = 0;
 	getmaxyx(stdscr, max_y, max_x);
+	
+	while (1) {
 
-	srand(time(NULL));
-	lData->apple_x = (rand() % max_x);
-	lData->apple_y = (rand() % max_y);
+		srand(time(NULL));
+		lData->apple_x = (rand() % max_x);
+		lData->apple_y = (rand() % max_y);
+
+		while (current != NULL) {
+			if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y) {
+				repick = 1;
+				break;
+			}
+			
+			current = current->next;
+		}
+
+		if (! repick)
+			break;
+	}
+
+
 }
 
 int backwards(Data* lData, int past_x, int past_y) {
@@ -234,7 +252,6 @@ Data* create_snake(int max_x, int max_y) {
 }
 
 int main() {
-
 	int max_x, max_y;
 
 	initscr();
@@ -314,9 +331,11 @@ int main() {
 
 		if (lData->head->direction_y)
 			usleep(150000);
+			// usleep(300000);
 
 		else 
 			usleep(37500);
+			// usleep(300000);
 
 		refresh();
 
