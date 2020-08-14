@@ -14,8 +14,8 @@ typedef struct node {
 	struct node *prev;
 	int x_cord;
 	int y_cord;
-	int direction_x;
-	int direction_y;
+	int x_direction;
+	int y_direction;
 	int pivot; // change in direction (causes "snake" effect)
 } Node;
 
@@ -23,8 +23,8 @@ typedef struct data {
 	struct node *head;
 	struct node *tail;
 	int score; 
-	int apple_x;
-	int apple_y;
+	int x_apple;
+	int y_apple;
 } Data;
 
 // function declerations
@@ -55,7 +55,7 @@ void free_list(Data* lData) {
 char *head_of_the_snake(Data* lData) {
 	char *head;
 
-	switch(lData->head->direction_x){
+	switch(lData->head->x_direction){
 		case 1:
 			head = ">";
 			break;
@@ -63,7 +63,7 @@ char *head_of_the_snake(Data* lData) {
 			head = "<";
 			break;
 	}
-	switch(lData->head->direction_y) {
+	switch(lData->head->y_direction) {
 		case 1:
 			head = "v";
 			break;
@@ -80,14 +80,19 @@ void gen_apple(Data* lData) {
 	int max_y, max_x, repick = 0;
 	getmaxyx(stdscr, max_y, max_x);
 	
-	while (1) {
+	while (1) { 
+		/* 
+		keep looping till a valid cord pair is found
+		Very inefficent as the snake grows larger, TODO: make a faster/better 
+		method to spawn apples on the screen.
+		*/
 
 		srand(time(NULL));
-		lData->apple_x = (rand() % max_x);
-		lData->apple_y = (rand() % max_y);
+		lData->x_apple = (rand() % max_x);
+		lData->y_apple = (rand() % max_y);
 
 		while (current != NULL) {
-			if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y) {
+			if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) {
 				repick = 1;
 				break;
 			}
@@ -104,10 +109,10 @@ void gen_apple(Data* lData) {
 
 int backwards(Data* lData, int past_x, int past_y) {
 
-	if (lData->head->direction_x * -1 == past_x && past_x != 0) 
+	if (lData->head->x_direction * -1 == past_x && past_x != 0) 
 		return 1;
 	
-	if (lData->head->direction_y * -1 == past_y && past_y != 0 )
+	if (lData->head->y_direction * -1 == past_y && past_y != 0 )
 		return 1;
 	
 	return 0;
@@ -118,8 +123,8 @@ void update_direction(Data* lData) {
 	if (lData->head->next == NULL)
 		return;
 	
-	lData->head->next->direction_x = lData->head->direction_x;
-	lData->head->next->direction_y = lData->head->direction_y;
+	lData->head->next->x_direction = lData->head->x_direction;
+	lData->head->next->y_direction = lData->head->y_direction;
 
 	if (lData->head->next->next != NULL) {
 		lData->head->next->next->pivot = 1;
@@ -137,37 +142,37 @@ void move_snake(Data* lData) {
 
 	max_x = getmaxx(stdscr);
 
-	current->x_cord += current->direction_x;
-	current->y_cord += current->direction_y;
+	current->x_cord += current->x_direction;
+	current->y_cord += current->y_direction;
 
 	mvprintw(current->y_cord, current->x_cord, head);
-	mvprintw(lData->apple_y, lData->apple_x, "@");
+	mvprintw(lData->y_apple, lData->x_apple, "@");
 	mvprintw(0, max_x - 3, "%d", lData->score); // current score
 
-	if (current->x_cord == lData->apple_x && current->y_cord == lData->apple_y) 
+	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) 
 		grow_snake(lData);
 
 	current = current->next;
 	while (current != NULL) {
 
 		if (current != lData->head->next && ! current->pivot) {
-			x -= current->prev->direction_x;
-			y -= current->prev->direction_y;
+			x -= current->prev->x_direction;
+			y -= current->prev->y_direction;
 			current->x_cord = x;
 			current->y_cord = y;
 		} else if (current->pivot == 1) {
-			x -= current->direction_x;
-			y -= current->direction_y;
-			current->x_cord += current->direction_x;
-			current->y_cord += current->direction_y;
+			x -= current->x_direction;
+			y -= current->y_direction;
+			current->x_cord += current->x_direction;
+			current->y_cord += current->y_direction;
 			current->pivot ++;
 		} else if (current->pivot == 2) {
-			x -= current->prev->direction_x;
-			y -= current->prev->direction_y;
+			x -= current->prev->x_direction;
+			y -= current->prev->y_direction;
 			current->x_cord = x;
 			current->y_cord = y;
-			current->direction_x = current->prev->direction_x;
-			current->direction_y = current->prev->direction_y;
+			current->x_direction = current->prev->x_direction;
+			current->y_direction = current->prev->y_direction;
 			current->pivot = 0;
 			if (current->next != NULL)
 				current->next->pivot = 1;
@@ -189,11 +194,11 @@ void move_snake(Data* lData) {
 void grow_snake(Data* lData) {
 	
 	Node* new = (Node*)malloc(sizeof(Node));
-	new->x_cord = lData->tail->x_cord - lData->tail->direction_x;
-	new->y_cord = lData->tail->y_cord - lData->tail->direction_y;
+	new->x_cord = lData->tail->x_cord - lData->tail->x_direction;
+	new->y_cord = lData->tail->y_cord - lData->tail->y_direction;
 
-	new->direction_x = lData->tail->direction_x;
-	new->direction_y = lData->tail->direction_y;
+	new->x_direction = lData->tail->x_direction;
+	new->y_direction = lData->tail->y_direction;
 
 	new->next = NULL;
 	new->prev = lData->tail;
@@ -239,8 +244,8 @@ Data* create_snake(int max_x, int max_y) {
 	lData->tail = head;
 	lData->score = 0;
 
-	head->direction_x = 1;
-	head->direction_y = 0;
+	head->x_direction = 1;
+	head->y_direction = 0;
 
 	head->x_cord = max_x / 2;
 	head->y_cord = max_y / 2;
@@ -271,38 +276,38 @@ int main() {
 	clear();
 
 	gen_apple(lData);
-	mvprintw(lData->apple_y, lData->apple_x, "@");
+	mvprintw(lData->y_apple, lData->x_apple, "@");
 
 	while(1) {
 		
 		int move = getch();
 		int change = 0;
-		int past_x = lData->head->direction_x;
-		int past_y = lData->head->direction_y;
+		int past_x = lData->head->x_direction;
+		int past_y = lData->head->y_direction;
 
 		switch(move) {
 			case 'w':
 			case KEY_UP:
-				lData->head->direction_x = 0; 
-				lData->head->direction_y = -1;
+				lData->head->x_direction = 0; 
+				lData->head->y_direction = -1;
 				change = 1;
 				break;
 			case 's':
 			case KEY_DOWN:
-				lData->head->direction_x = 0; 
-				lData->head->direction_y = 1;
+				lData->head->x_direction = 0; 
+				lData->head->y_direction = 1;
 				change = 1;
 				break;
 			case 'd':
 			case KEY_RIGHT:
-				lData->head->direction_x = 1; 
-				lData->head->direction_y = 0;
+				lData->head->x_direction = 1; 
+				lData->head->y_direction = 0;
 				change = 1;
 				break;
 			case 'a':
 			case KEY_LEFT:
-				lData->head->direction_x = -1; 
-				lData->head->direction_y = 0;
+				lData->head->x_direction = -1; 
+				lData->head->y_direction = 0;
 				change = 1;
 				break;
 			case 27:  // esc
@@ -329,7 +334,7 @@ int main() {
 			return 0;
 		}
 
-		if (lData->head->direction_y)
+		if (lData->head->y_direction)
 			usleep(150000);
 			// usleep(300000);
 
