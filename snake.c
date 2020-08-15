@@ -47,28 +47,29 @@ void high_score(Data* lData) {
 
 	*/
 	FILE *f;
-	char *high = NULL;
-	int high_int;
+	int high;
 
-	f = fopen(".highscore.txt", "r");
-	if (f == NULL) {
-		f = fopen(".highscore.txt", "w+");
+	if (access(".highscore.txt", F_OK == -1)) { //file does not exsist
+		f = fopen(".highscore.txt", "w");
 		fprintf(f, "%d", lData->score);
-	} else {
 		fclose(f);
-		f = fopen(".highscore.txt", "w+");
-		fgets(high, 10, f);
-		high_int = atoi(high);
-		if (lData->score > high_int) {
+	} else {
+		f = fopen(".highscore.txt", "r");
+		fscanf(f, "%d", &high);
+		if (lData->score > high) {
 			int x, y;
 			getmaxyx(stdscr, y, x);
-			mvprintw((y / 2) + 2, (x / 2) - 10, "New high score!: %d", high_int);
-			fprintf(f, "%d", high_int);
+			fclose(f);
+			f = fopen(".highscore.txt", "w+");
+			fprintf(f, "%d", lData->score);
+			mvprintw((y / 2) + 2, (x / 2) - 10, "New high score!: %d", lData->score);
 		}
+		fclose(f);
+		
 	}
 
 	refresh();
-	fclose(f);
+	// fclose(f); ".highscore.txt"
 }
 
 
