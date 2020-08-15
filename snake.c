@@ -28,6 +28,7 @@ typedef struct data {
 } Data;
 
 // function declerations
+void high_score(Data* lData);
 void free_list(Data* lData);
 char *head_of_the_snake(Data* lData);
 void gen_apple(Data* lData);
@@ -38,6 +39,37 @@ void grow_snake(Data* lData);
 int collison(Data* lData, int past_x, int past_y);
 Data* create_snake(int max_x, int max_y);
 // function declerations
+
+void high_score(Data* lData) {
+	/*
+
+	total mess
+
+	*/
+	FILE *f;
+	char *high = NULL;
+	int high_int;
+
+	f = fopen(".highscore.txt", "r");
+	if (f == NULL) {
+		f = fopen(".highscore.txt", "w+");
+		fprintf(f, "%d", lData->score);
+	} else {
+		fclose(f);
+		f = fopen(".highscore.txt", "w+");
+		fgets(high, 10, f);
+		high_int = atoi(high);
+		if (lData->score > high_int) {
+			int x, y;
+			getmaxyx(stdscr, y, x);
+			mvprintw((y / 2) + 2, (x / 2) - 10, "New high score!: %d", high_int);
+			fprintf(f, "%d", high_int);
+		}
+	}
+
+	refresh();
+	fclose(f);
+}
 
 
 void free_list(Data* lData) {
@@ -103,8 +135,6 @@ void gen_apple(Data* lData) {
 		if (! repick)
 			break;
 	}
-
-
 }
 
 int backwards(Data* lData, int past_x, int past_y) {
@@ -327,6 +357,7 @@ int main() {
 			clear();
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
 			mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
+			high_score(lData);
 			refresh();
 			getchar();
 			endwin();
@@ -336,18 +367,9 @@ int main() {
 
 		if (lData->head->y_direction)
 			usleep(150000);
-			// usleep(300000);
-
 		else 
 			usleep(37500);
-			// usleep(300000);
-
-		refresh();
-
 	}
-	endwin();
-
-	return 0;
 }
 
 //TODO: add highscore w/ persistant memory
