@@ -41,35 +41,35 @@ Data* create_snake(int max_x, int max_y);
 // function declerations
 
 void high_score(Data* lData) {
-	/*
 
-	total mess
-
-	*/
 	FILE *f;
-	int high;
+	int high, x, y, new = 0;
 
 	if (access(".highscore.txt", F_OK == -1)) { //file does not exsist
 		f = fopen(".highscore.txt", "w");
 		fprintf(f, "%d", lData->score);
-		fclose(f);
-	} else {
-		f = fopen(".highscore.txt", "r");
+
+	} else {									//file does exsist
+		f = fopen(".highscore.txt", "r+");
 		fscanf(f, "%d", &high);
+		fclose(f);
+
 		if (lData->score > high) {
-			int x, y;
-			getmaxyx(stdscr, y, x);
-			fclose(f);
 			f = fopen(".highscore.txt", "w+");
 			fprintf(f, "%d", lData->score);
-			mvprintw((y / 2) + 2, (x / 2) - 10, "New high score!: %d", lData->score);
-		}
-		fclose(f);
-		
-	}
+			new = 1;
+		} 
 
-	refresh();
-	// fclose(f); ".highscore.txt"
+		getmaxyx(stdscr, y, x);
+		char *message = (new) ?  "New high score!: %d" : "High Score: %d";
+		int displacement = (new) ? 10 : 7;
+		int score = (new) ? lData->score : high;
+
+		mvprintw((y / 2) + 2, (x / 2) - displacement, message, score);
+
+	}
+	if (f != NULL)
+		fclose(f);
 }
 
 
@@ -372,5 +372,3 @@ int main() {
 			usleep(37500);
 	}
 }
-
-//TODO: add highscore w/ persistant memory
