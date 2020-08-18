@@ -176,14 +176,21 @@ void move_snake(Data* lData) {
 	current->x_cord += current->x_direction;
 	current->y_cord += current->y_direction;
 
-	mvprintw(current->y_cord, current->x_cord, head);
+	attron(COLOR_PAIR(2));
 	mvprintw(lData->y_apple, lData->x_apple, "@");
+	attroff(COLOR_PAIR(2));
+
+	attron(COLOR_PAIR(3));
 	mvprintw(0, max_x - 3, "%d", lData->score); // current score
+	attroff(COLOR_PAIR(3));
 
 	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) 
 		grow_snake(lData);
-
+	
+	attron(COLOR_PAIR(1));
+	mvprintw(current->y_cord, current->x_cord, head);
 	current = current->next;
+
 	while (current != NULL) {
 
 		if (current != lData->head->next && ! current->pivot) {
@@ -220,6 +227,7 @@ void move_snake(Data* lData) {
 
 	}
 	refresh();
+	attroff(COLOR_PAIR(1));
 }
 
 void grow_snake(Data* lData) {
@@ -295,11 +303,26 @@ int main() {
 	curs_set(FALSE);
 	keypad(stdscr, TRUE);
 
+	if (has_colors() == FALSE) {
+		endwin();
+		printf("Your terminal doen't support color.\n");
+		return 1;
+	}
+
+	start_color();
+	init_pair(1, COLOR_GREEN, COLOR_BLACK);
+	init_pair(2, COLOR_RED, COLOR_BLACK);
+	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(4, COLOR_BLACK, COLOR_BLACK);
+	wbkgd(stdscr, COLOR_PAIR(4));
+
 	getmaxyx(stdscr, max_y, max_x);
 	Data* lData = create_snake(max_x, max_y);
 
+	attron(COLOR_PAIR(3));
 	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
+	attroff(COLOR_PAIR(3));
 
 	refresh();
 	getchar();  // wait for user to press a key
@@ -356,8 +379,12 @@ int main() {
 		if (collion(lData, past_x, past_y)) {
 
 			clear();
+
+			attron(COLOR_PAIR(3));
 			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
 			mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
+			attroff(COLOR_PAIR(3));
+
 			high_score(lData);
 			refresh();
 			getchar();
