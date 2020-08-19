@@ -29,6 +29,7 @@ typedef struct data {
 
 // function declerations
 void high_score(Data* lData);
+void custom_color();
 void free_list(Data* lData);
 char *head_of_the_snake(Data* lData);
 void gen_apple(Data* lData);
@@ -72,6 +73,9 @@ void high_score(Data* lData) {
 		fclose(f);
 }
 
+void custom_color() {
+
+}
 
 void free_list(Data* lData) {
 	Node* current = lData->head;
@@ -296,7 +300,7 @@ Data* create_snake(int max_x, int max_y) {
 }
 
 int main() {
-	int max_x, max_y;
+	int max_x, max_y, click;
 
 	initscr();
 	noecho();  // no keyboard input
@@ -325,7 +329,17 @@ int main() {
 	attroff(COLOR_PAIR(3));
 
 	refresh();
-	getchar();  // wait for user to press a key
+	click = getchar();  // wait for user to press a key
+	if (click == 's') {
+		clear();
+		attron(COLOR_PAIR(1));
+		mvprintw(max_y / 2, max_x / 2 - 6, 
+		"Pick a color:\nblack, yellow, red, green, magenta, cyan, blue, white");
+		refresh();
+		attroff(COLOR_PAIR(1));
+
+		getchar();
+	}
 	nodelay(stdscr, true);
 	clear();
 
