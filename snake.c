@@ -29,6 +29,7 @@ typedef struct data {
 
 // function declerations
 void high_score(Data* lData);
+void process_color(char snake_c[10], char apple_c[10], char background_c[10]);
 void custom_color();
 void free_list(Data* lData);
 char *head_of_the_snake(Data* lData);
@@ -73,8 +74,47 @@ void high_score(Data* lData) {
 		fclose(f);
 }
 
-void custom_color() {
+void process_color(char snake_c[10], char apple_c[10], char background_c[10]) {
+	switch (snake_c) {
+		case "black":
+		case "yellow":
+		case "red":
+		case "green":
+		case "magenta":
+		case "cyan":
+		case "blue":
+		case "white":
 
+	}
+	printf("Color doesn't exsist. Using default colors.");
+}
+
+void custom_color() {
+	int max_y;
+	char snake_c[10], apple_c[10], background_c[10];
+
+	max_y = getmaxy(stdscr);
+	clear();
+	attron(COLOR_PAIR(1));
+	mvprintw(max_y / 2, 0, 
+	"Pick a color(for snake):\nblack \nyellow \nred \ngreen \nmagenta \ncyan \nblue \nwhite");
+	getstr(snake_c);
+
+	mvprintw(max_y / 2, 0, 
+	"Pick a color(for apple):\nblack \nyellow \nred \ngreen \nmagenta \ncyan \nblue \nwhite");
+	getstr(apple_c);
+
+	mvprintw(max_y / 2, 0, 
+	"Pick a color(for background):\nblack \nyellow \nred \ngreen \nmagenta \ncyan \nblue \nwhite");
+	getstr(background_c);
+
+	refresh();
+
+	attroff(COLOR_PAIR(1));
+
+	process_color(snake_c, apple_c, background_c);
+
+	getchar();
 }
 
 void free_list(Data* lData) {
@@ -331,14 +371,7 @@ int main() {
 	refresh();
 	click = getchar();  // wait for user to press a key
 	if (click == 's') {
-		clear();
-		attron(COLOR_PAIR(1));
-		mvprintw(max_y / 2, max_x / 2 - 6, 
-		"Pick a color:\nblack, yellow, red, green, magenta, cyan, blue, white");
-		refresh();
-		attroff(COLOR_PAIR(1));
-
-		getchar();
+		custom_color();
 	}
 	nodelay(stdscr, true);
 	clear();
