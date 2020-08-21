@@ -8,6 +8,7 @@ Basic terminal snake game
 #include <unistd.h>
 #include <ncurses.h>
 #include <time.h>
+#include <string.h>
 
 typedef struct node {
 	struct node *next;
@@ -28,8 +29,10 @@ typedef struct data {
 } Data;
 
 // function declerations
+void upper(char str[10]);
 void high_score(Data* lData);
-void process_color(char snake_c[10], char apple_c[10], char background_c[10]);
+int convert_color_input(char color[10]);
+void process_color(char snake_c[10], char apple_c[10]);
 void custom_color();
 void free_list(Data* lData);
 char *head_of_the_snake(Data* lData);
@@ -41,6 +44,13 @@ void grow_snake(Data* lData);
 int collison(Data* lData, int past_x, int past_y);
 Data* create_snake(int max_x, int max_y);
 // function declerations
+
+void upper(char str[10]) {
+	for (int i = 0; str[i] != '\0'; i++) {
+		if (str[i] >= 'a' && str[i] <= 'z')
+			str[i] = str[i] - 32;
+	}
+}
 
 void high_score(Data* lData) {
 
@@ -74,45 +84,75 @@ void high_score(Data* lData) {
 		fclose(f);
 }
 
-void process_color(char snake_c[10], char apple_c[10], char background_c[10]) {
-	switch (snake_c) {
-		case "black":
-		case "yellow":
-		case "red":
-		case "green":
-		case "magenta":
-		case "cyan":
-		case "blue":
-		case "white":
+int convert_color_input(char color[10]) {
+	// convert str to int rep. of a color defined by curses
 
+	if (strcmp(color, "BLACK") == 0)
+		return 0;
+	else if (strcmp(color, "RED") == 0)
+		return 1;
+	else if (strcmp(color, "GREEN") == 0)
+		return 2;
+	else if (strcmp(color, "YELLOW") == 0)
+		return 3;
+	else if (strcmp(color, "BLUE") == 0)
+		return 4;
+	else if (strcmp(color, "MAGENTA") == 0)
+		return 5;
+	else if (strcmp(color, "CYAN") == 0)
+		return 6; 
+	else //(strcmp(color, "WHITE")
+		return 7;
+
+}
+
+void process_color(char snake_c[10], char apple_c[10]) {
+	char possible_colors[] = "black|red|green|yellow|blue|magenta|cyan|white";
+	int snake_convert, apple_convert;
+
+	if (strstr(possible_colors, snake_c) == NULL ||
+	    strstr(possible_colors, apple_c) == NULL) {
+		
+		mvprintw(1, 1, "Invalid color: Using default");
+		return;
 	}
-	printf("Color doesn't exsist. Using default colors.");
+	upper(snake_c);
+	upper(apple_c);
+
+	snake_convert = convert_color_input(snake_c);
+	apple_convert = convert_color_input(apple_c);
+
+	printf("%d and %d", snake_convert, apple_convert);
+	init_pair(1, snake_convert, COLOR_BLACK); // snake
+	init_pair(2, apple_convert, COLOR_BLACK);   // apple
 }
 
 void custom_color() {
-	int max_y;
-	char snake_c[10], apple_c[10], background_c[10];
+
+	int max_y, click;
+	char snake_c[10], apple_c[10];
+
+	click = getch();
+	if (click != 's') {
+		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
+		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
+		return;
+	}
 
 	max_y = getmaxy(stdscr);
 	clear();
-	attron(COLOR_PAIR(1));
+	attron(COLOR_PAIR(3));
 	mvprintw(max_y / 2, 0, 
-	"Pick a color(for snake):\nblack \nyellow \nred \ngreen \nmagenta \ncyan \nblue \nwhite");
+	"Pick a color(for snake):\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite");
 	getstr(snake_c);
 
 	mvprintw(max_y / 2, 0, 
-	"Pick a color(for apple):\nblack \nyellow \nred \ngreen \nmagenta \ncyan \nblue \nwhite");
+	"Pick a color(for apple):\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite);
 	getstr(apple_c);
 
-	mvprintw(max_y / 2, 0, 
-	"Pick a color(for background):\nblack \nyellow \nred \ngreen \nmagenta \ncyan \nblue \nwhite");
-	getstr(background_c);
-
 	refresh();
-
-	attroff(COLOR_PAIR(1));
-
-	process_color(snake_c, apple_c, background_c);
+	attroff(COLOR_PAIR(3));
+	process_color(snake_c, apple_c);
 
 	getchar();
 }
@@ -340,7 +380,7 @@ Data* create_snake(int max_x, int max_y) {
 }
 
 int main() {
-	int max_x, max_y, click;
+	int max_x, max_y;
 
 	initscr();
 	noecho();  // no keyboard input
@@ -354,10 +394,8 @@ int main() {
 	}
 
 	start_color();
-	init_pair(1, COLOR_GREEN, COLOR_BLACK);
-	init_pair(2, COLOR_RED, COLOR_BLACK);
-	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
-	init_pair(4, COLOR_BLACK, COLOR_BLACK);
+	init_pair(3, COLOR_MAGENTA, COLOR_BLACK); // text
+	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
 	wbkgd(stdscr, COLOR_PAIR(4));
 
 	getmaxyx(stdscr, max_y, max_x);
@@ -369,10 +407,8 @@ int main() {
 	attroff(COLOR_PAIR(3));
 
 	refresh();
-	click = getchar();  // wait for user to press a key
-	if (click == 's') {
-		custom_color();
-	}
+	custom_color();
+
 	nodelay(stdscr, true);
 	clear();
 
