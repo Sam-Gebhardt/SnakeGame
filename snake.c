@@ -9,41 +9,8 @@ Basic terminal snake game
 #include <ncurses.h>
 #include <time.h>
 #include <string.h>
+#include "snake.h"
 
-typedef struct node {
-	struct node *next;
-	struct node *prev;
-	int x_cord;
-	int y_cord;
-	int x_direction;
-	int y_direction;
-	int pivot; // change in direction (causes "snake" effect)
-} Node;
-
-typedef struct data {
-	struct node *head;
-	struct node *tail;
-	int score; 
-	int x_apple;
-	int y_apple;
-} Data;
-
-// function declerations
-void upper(char str[10]);
-void high_score(Data* lData);
-int convert_color_input(char color[10]);
-void process_color(char snake_c[10], char apple_c[10]);
-void custom_color();
-void free_list(Data* lData);
-char *head_of_the_snake(Data* lData);
-void gen_apple(Data* lData);
-int backwards(Data* lData, int past_x, int past_y);
-void update_direction(Data* lData);
-void move_snake(Data* lData);
-void grow_snake(Data* lData);
-int collison(Data* lData, int past_x, int past_y);
-Data* create_snake(int max_x, int max_y);
-// function declerations
 
 void upper(char str[10]) {
 	for (int i = 0; str[i] != '\0'; i++) {
@@ -112,8 +79,18 @@ void process_color(char snake_c[10], char apple_c[10]) {
 
 	if (strstr(possible_colors, snake_c) == NULL ||
 	    strstr(possible_colors, apple_c) == NULL) {
-		
-		mvprintw(1, 1, "Invalid color: Using default");
+
+		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
+		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
+
+		clear();
+		attron(COLOR_PAIR(1));
+		mvprintw(0, 1, "Invalid color: Using default");
+
+		refresh();
+		attroff(COLOR_PAIR(1));
+
+		sleep(1);
 		return;
 	}
 	upper(snake_c);
@@ -131,9 +108,10 @@ void custom_color() {
 
 	int max_y, click;
 	char snake_c[10], apple_c[10];
+	char colors[] = "\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite";
 
 	click = getch();
-	if (click != 's') {
+	if (click != 's') {  // classic colors
 		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
 		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
 		return;
@@ -142,12 +120,10 @@ void custom_color() {
 	max_y = getmaxy(stdscr);
 	clear();
 	attron(COLOR_PAIR(3));
-	mvprintw(max_y / 2, 0, 
-	"Pick a color(for snake):\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite");
+	mvprintw(max_y / 2, 0, "Pick a color(for snake): %s", colors);
 	getstr(snake_c);
 
-	mvprintw(max_y / 2, 0, 
-	"Pick a color(for apple):\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite);
+	mvprintw(max_y / 2, 0, "Pick a color(for apple): %s", colors);
 	getstr(apple_c);
 
 	refresh();
