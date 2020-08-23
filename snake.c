@@ -145,6 +145,23 @@ void free_list(Data* lData) {
 	free(lData);
 }
 
+void cleanup(Data* lData) {
+	int max_x, max_y;
+	getmaxyx(stdscr, max_y, max_x);
+	clear();
+
+	attron(COLOR_PAIR(3));
+	mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
+	mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
+	attroff(COLOR_PAIR(3));
+
+	high_score(lData);
+	refresh();
+	getchar();
+	endwin();
+	free_list(lData);
+}
+
 char *head_of_the_snake(Data* lData) {
 	char *head;
 
@@ -189,10 +206,8 @@ void gen_apple(Data* lData) {
 				repick = 1;
 				break;
 			}
-			
 			current = current->next;
 		}
-
 		if (! repick)
 			break;
 	}
@@ -220,6 +235,39 @@ void update_direction(Data* lData) {
 	if (lData->head->next->next != NULL) {
 		lData->head->next->next->pivot = 1;
 	}
+}
+
+int get_move(Data* lData, int move) {
+	int change = 0;
+	switch(move) {
+		case 'w':
+		case KEY_UP:
+			lData->head->x_direction = 0; 
+			lData->head->y_direction = -1;
+			change = 1;
+			break;
+		case 's':
+		case KEY_DOWN:
+			lData->head->x_direction = 0; 
+			lData->head->y_direction = 1;
+			change = 1;
+			break;
+		case 'd':
+		case KEY_RIGHT:
+			lData->head->x_direction = 1; 
+			lData->head->y_direction = 0;
+			change = 1;
+			break;
+		case 'a':
+		case KEY_LEFT:
+			lData->head->x_direction = -1; 
+			lData->head->y_direction = 0;
+			change = 1;
+			break;
+		case 27:  // esc
+			return -1;
+	}
+	return change;
 }
 
 
@@ -326,7 +374,6 @@ int collion(Data* lData, int past_x, int past_y) {
 
 		if (current->x_cord == head->x_cord && current->y_cord == head->y_cord)
 			return 1;
-
 		current = current->next;
 	}
 
@@ -370,7 +417,7 @@ int main() {
 	}
 
 	start_color();
-	init_pair(3, COLOR_MAGENTA, COLOR_BLACK); // text
+	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
 	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
 	wbkgd(stdscr, COLOR_PAIR(4));
 
@@ -398,38 +445,12 @@ int main() {
 		int past_x = lData->head->x_direction;
 		int past_y = lData->head->y_direction;
 
-		switch(move) {
-			case 'w':
-			case KEY_UP:
-				lData->head->x_direction = 0; 
-				lData->head->y_direction = -1;
-				change = 1;
-				break;
-			case 's':
-			case KEY_DOWN:
-				lData->head->x_direction = 0; 
-				lData->head->y_direction = 1;
-				change = 1;
-				break;
-			case 'd':
-			case KEY_RIGHT:
-				lData->head->x_direction = 1; 
-				lData->head->y_direction = 0;
-				change = 1;
-				break;
-			case 'a':
-			case KEY_LEFT:
-				lData->head->x_direction = -1; 
-				lData->head->y_direction = 0;
-				change = 1;
-				break;
-			case 27:  // esc
-				clear();
-				endwin();
-				free_list(lData);
-				return 0;
-		}
+		change = get_move(lData, move);
 
+		if (change == -1) {
+			cleanup(lData);
+			return 0;
+		}
 		if (change)
 			update_direction(lData);
 		
@@ -437,18 +458,7 @@ int main() {
 
 		if (collion(lData, past_x, past_y)) {
 
-			clear();
-
-			attron(COLOR_PAIR(3));
-			mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
-			mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
-			attroff(COLOR_PAIR(3));
-
-			high_score(lData);
-			refresh();
-			getchar();
-			endwin();
-			free_list(lData);
+			cleanup(lData);
 			return 0;
 		}
 
@@ -458,3 +468,12 @@ int main() {
 			usleep(37500);
 	}
 }
+
+/* TODO:
+Absraction in main (switch case, end conditions)
+change usleep based on ratio of max_x/y
+
+**Readability** 
+Clean up main before loop
+
+*/
