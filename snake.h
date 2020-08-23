@@ -35,6 +35,7 @@ int get_move(Data* lData, int move);
 void move_snake(Data* lData);
 void grow_snake(Data* lData);
 int collison(Data* lData, int past_x, int past_y);
+int screen_init(int max_x, int max_y);
 Data* create_snake(int max_x, int max_y);
 // function declerations
 

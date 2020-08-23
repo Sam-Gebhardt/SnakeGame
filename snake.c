@@ -23,6 +23,7 @@ void high_score(Data* lData) {
 
 	FILE *f;
 	int high, x, y, new = 0;
+	attron(COLOR_PAIR(3));
 
 	if (access(".highscore.txt", F_OK == -1)) { //file does not exsist
 		f = fopen(".highscore.txt", "w");
@@ -45,10 +46,10 @@ void high_score(Data* lData) {
 		int score = (new) ? lData->score : high;
 
 		mvprintw((y / 2) + 2, (x / 2) - displacement, message, score);
-
 	}
 	if (f != NULL)
 		fclose(f);
+	attroff(COLOR_PAIR(3));
 }
 
 int convert_color_input(char color[10]) {
@@ -382,6 +383,38 @@ int collion(Data* lData, int past_x, int past_y) {
 		backwards(lData, past_x, past_y);
 }
 
+int screen_init(int max_x, int max_y) {
+	
+	noecho();  // no keyboard input
+	curs_set(FALSE);
+	keypad(stdscr, TRUE);
+
+	if (has_colors() == FALSE) {
+		endwin();
+		printf("Your terminal doen't support color.\n");
+		return 1;
+	}
+
+	start_color();
+	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
+	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
+	wbkgd(stdscr, COLOR_PAIR(4));
+
+
+	attron(COLOR_PAIR(3));
+	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
+	mvprintw(max_y / 2, max_x / 2, ">");
+	attroff(COLOR_PAIR(3));
+
+	refresh();
+	custom_color();
+
+	nodelay(stdscr, true);
+	clear();
+
+	return 0;
+}
+
 Data* create_snake(int max_x, int max_y) {
 	Node* head = (Node*)malloc(sizeof(Node));
 	Data* lData = (Data*)malloc(sizeof(Data));
@@ -406,35 +439,11 @@ int main() {
 	int max_x, max_y;
 
 	initscr();
-	noecho();  // no keyboard input
-	curs_set(FALSE);
-	keypad(stdscr, TRUE);
-
-	if (has_colors() == FALSE) {
-		endwin();
-		printf("Your terminal doen't support color.\n");
-		return 1;
-	}
-
-	start_color();
-	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
-	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
-	wbkgd(stdscr, COLOR_PAIR(4));
-
 	getmaxyx(stdscr, max_y, max_x);
+	if (screen_init(max_x, max_y)) 
+		return 1;
+
 	Data* lData = create_snake(max_x, max_y);
-
-	attron(COLOR_PAIR(3));
-	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
-	mvprintw(max_y / 2, max_x / 2, ">");
-	attroff(COLOR_PAIR(3));
-
-	refresh();
-	custom_color();
-
-	nodelay(stdscr, true);
-	clear();
-
 	gen_apple(lData);
 	mvprintw(lData->y_apple, lData->x_apple, "@");
 
