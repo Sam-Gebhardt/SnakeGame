@@ -31,14 +31,16 @@ typedef struct data {
 // function declerations
 void upper(char str[10]);
     /*
-    Turns str into all upper case
+    Turns str into all upper case. Used to convert user input into
+    a standard form.
     */
 
 
 void high_score(Data* lData);
     /*
-    Checks if the final score is higher than the highscore. If there is no
-    high score a file highscore.txt is created.
+    Checks if the final score is higher than the highscore, if it is prints to the
+    screen that there is a new high score. If there is no high score a file highscore.txt 
+    is created.
     */
 
 
@@ -77,6 +79,7 @@ void cleanup(Data* lData);
 char *head_of_the_snake(Data* lData);
 	/*
     Returns the correct char for the head based on the current direction.
+    ie if up_arrow is clicked, then the character is '^'
 	*/
 
 
@@ -94,12 +97,13 @@ int backwards(Data* lData, int past_x, int past_y);
 
 void update_direction(Data* lData);
 	/*
+    Sets the head of the snake to the direction specified by user input.
 	*/
 
 
 int get_move(Data* lData, int move);
 	/*
-    Updates the direction of the head of the snake based on user input.
+    Reads user input and updates the direction of movement accordingly.
 	*/
 
 
@@ -117,7 +121,7 @@ void grow_snake(Data* lData);
 
 int collison(Data* lData, int past_x, int past_y);
 	/*
-    Detects if the snake has attempted to eat itself.
+    Detects if the snake has attempted to eat itself, or go out of bounds.
 	*/
 
 
