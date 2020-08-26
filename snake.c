@@ -105,7 +105,7 @@ void process_color(char snake_c[10], char apple_c[10]) {
 	init_pair(2, apple_convert, COLOR_BLACK);   // apple
 }
 
-void custom_color() {
+void custom_color(void) {
 
 	int max_y, click;
 	char snake_c[10], apple_c[10];
@@ -339,6 +339,19 @@ void move_snake(Data* lData) {
 	attroff(COLOR_PAIR(1));
 }
 
+void snake_sleep(Data* lData, int max_x, int max_y) {
+	int time;
+
+	if (lData->head->y_direction) {
+		
+		time = 3600000 / max_y;
+		usleep(time);
+	} else {
+		time = 3600000 / max_x;
+		usleep(time); //37500
+	}
+}
+
 void grow_snake(Data* lData) {
 	
 	Node* new = (Node*)malloc(sizeof(Node));
@@ -450,11 +463,9 @@ int main() {
 	while(1) {
 		
 		int move = getch();
-		int change = 0;
-		int past_x = lData->head->x_direction;
-		int past_y = lData->head->y_direction;
+		int past_x = lData->head->x_direction, past_y = lData->head->y_direction;
 
-		change = get_move(lData, move);
+		int change = get_move(lData, move);
 
 		if (change == -1) {
 			cleanup(lData);
@@ -470,17 +481,11 @@ int main() {
 			cleanup(lData);
 			return 0;
 		}
-
-		if (lData->head->y_direction)
-			usleep(150000);
-		else 
-			usleep(37500);
+	snake_sleep(lData, max_x, max_y);
 	}
 }
 
 /* TODO:
-Absraction in main (switch case, end conditions)
-change usleep based on ratio of max_x/y
 
 **Readability** 
 Clean up main before loop
