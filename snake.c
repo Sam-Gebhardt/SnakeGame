@@ -12,7 +12,7 @@ Basic terminal snake game
 #include "snake.h"
 
 
-void upper(char str[10]) {
+void upper(char str[BUFSIZ]) {
 	for (int i = 0; str[i] != '\0'; i++) {
 		if (str[i] >= 'a' && str[i] <= 'z')
 			str[i] = str[i] - 32;
@@ -52,7 +52,7 @@ void high_score(Data* lData) {
 	attroff(COLOR_PAIR(3));
 }
 
-int convert_color_input(char color[10]) {
+int convert_color_input(char color[BUFSIZ]) {
 	// convert str to int rep. of a color defined by curses
 
 	if (strcmp(color, "BLACK") == 0)
@@ -74,8 +74,8 @@ int convert_color_input(char color[10]) {
 
 }
 
-void process_color(char snake_c[10], char apple_c[10]) {
-	char possible_colors[] = "black|red|green|yellow|blue|magenta|cyan|white";
+void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ]) {
+	char possible_colors[BUFSIZ] = "black|red|green|yellow|blue|magenta|cyan|white";
 	int snake_convert, apple_convert;
 
 	if (strstr(possible_colors, snake_c) == NULL ||
@@ -107,16 +107,9 @@ void process_color(char snake_c[10], char apple_c[10]) {
 
 void custom_color(void) {
 
-	int max_y, click;
-	char snake_c[10], apple_c[10];
-	char colors[] = "\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite";
-
-	click = getch();
-	if (click != 's') {  // classic colors
-		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
-		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
-		return;
-	}
+	int max_y;
+	char snake_c[BUFSIZ], apple_c[BUFSIZ];
+	char colors[BUFSIZ] = "\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite";
 
 	max_y = getmaxy(stdscr);
 	clear();
@@ -132,6 +125,31 @@ void custom_color(void) {
 	process_color(snake_c, apple_c);
 
 	getchar();
+}
+
+
+int custom_speed(void) {
+	// allow for faster or slower speed
+	int max_x, max_y;
+	char message[BUFSIZ] = "Enter custom speed:";
+
+	clear();
+	getmaxyx(stdscr, max_y, max_x);
+	attron(COLOR_PAIR(3));
+	mvprintw(max_y / 2, max_x / 2 - 40, "%s", message);
+	refresh();
+	attroff(COLOR_PAIR(3));
+	sleep(2);
+	return 1;
+}
+
+
+void settings(void) {
+	int input = getchar();
+
+	if (input != 's') {
+
+	}
 }
 
 void free_list(Data* lData) {
@@ -420,7 +438,14 @@ int screen_init(int max_x, int max_y) {
 	attroff(COLOR_PAIR(3));
 
 	refresh();
-	custom_color();
+	int input = getchar();
+	if (input == 's') {
+		custom_color();
+		custom_speed();
+	} else {
+		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
+		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
+	}
 
 	nodelay(stdscr, true);
 	clear();
@@ -489,5 +514,7 @@ int main() {
 
 **Readability** 
 Clean up main before loop
+
+allow for custom speed and custom color
 
 */

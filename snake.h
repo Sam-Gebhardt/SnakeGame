@@ -62,6 +62,11 @@ void custom_color(void);
     Gets user input for setting custom colors or defaults to normal color pairs.
     */
 
+int custom_speed(void);
+    /*
+
+    */
+
 
 void free_list(Data* lData);
     /*
