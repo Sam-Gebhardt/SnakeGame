@@ -9,6 +9,7 @@ Basic terminal snake game
 #include <ncurses.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 #include "snake.h"
 
 
@@ -130,17 +131,29 @@ void custom_color(void) {
 
 int custom_speed(void) {
 	// allow for faster or slower speed
-	int max_x, max_y;
-	char message[BUFSIZ] = "Enter custom speed:";
+	int max_x, max_y, speed;
+	char message[BUFSIZ] = "Enter custom speed(default is 3.6s):";
+	char speed_str[10];
 
 	clear();
 	getmaxyx(stdscr, max_y, max_x);
 	attron(COLOR_PAIR(3));
 	mvprintw(max_y / 2, max_x / 2 - 40, "%s", message);
-	refresh();
 	attroff(COLOR_PAIR(3));
-	sleep(2);
-	return 1;
+	refresh();
+	getstr(speed_str);
+
+	for (int i = 0; speed_str[i] != '\0'; i++) {
+		if (! isdigit(speed_str[i])) {
+			return 0;
+		}
+	}
+
+	speed = atoi(speed_str);
+	if (speed <= 0) 
+		return 0;
+	
+	return speed;
 }
 
 
@@ -357,15 +370,18 @@ void move_snake(Data* lData) {
 	attroff(COLOR_PAIR(1));
 }
 
-void snake_sleep(Data* lData, int max_x, int max_y) {
+void snake_sleep(Data* lData, int max_x, int max_y, int speed) {
 	int time;
+	speed *= 1000000;
+
+	if (speed == 0) // default case is 3.6 seconds
+		speed = 3600000;
 
 	if (lData->head->y_direction) {
-		
-		time = 3600000 / max_y;
+		time = speed / max_y;
 		usleep(time);
 	} else {
-		time = 3600000 / max_x;
+		time = speed / max_x;
 		usleep(time); //37500
 	}
 }
@@ -438,18 +454,6 @@ int screen_init(int max_x, int max_y) {
 	attroff(COLOR_PAIR(3));
 
 	refresh();
-	int input = getchar();
-	if (input == 's') {
-		custom_color();
-		custom_speed();
-	} else {
-		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
-		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
-	}
-
-	nodelay(stdscr, true);
-	clear();
-
 	return 0;
 }
 
@@ -474,13 +478,23 @@ Data* create_snake(int max_x, int max_y) {
 }
 
 int main() {
-	int max_x, max_y;
+	int max_x, max_y, speed = 0;
 
 	initscr();
 	getmaxyx(stdscr, max_y, max_x);
 	if (screen_init(max_x, max_y)) 
 		return 1;
 
+	int input = getchar();
+	if (input == 's') {
+		custom_color();
+		speed = custom_speed();
+	} else {
+		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
+		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
+	}
+
+	nodelay(stdscr, true);
 	Data* lData = create_snake(max_x, max_y);
 	gen_apple(lData);
 	mvprintw(lData->y_apple, lData->x_apple, "@");
@@ -506,7 +520,7 @@ int main() {
 			cleanup(lData);
 			return 0;
 		}
-	snake_sleep(lData, max_x, max_y);
+	snake_sleep(lData, max_x, max_y, speed);
 	}
 }
 
