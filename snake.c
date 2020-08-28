@@ -188,10 +188,11 @@ void cleanup(Data* lData) {
 	attroff(COLOR_PAIR(3));
 
 	high_score(lData);
+	free_list(lData);
+
 	refresh();
 	getchar();
 	endwin();
-	free_list(lData);
 }
 
 char *head_of_the_snake(Data* lData) {
@@ -394,6 +395,7 @@ void grow_snake(Data* lData) {
 
 	new->x_direction = lData->tail->x_direction;
 	new->y_direction = lData->tail->y_direction;
+	new->pivot = 0;
 
 	new->next = NULL;
 	new->prev = lData->tail;
@@ -467,6 +469,7 @@ Data* create_snake(int max_x, int max_y) {
 
 	head->x_direction = 1;
 	head->y_direction = 0;
+	head->pivot = 0;
 
 	head->x_cord = max_x / 2;
 	head->y_cord = max_y / 2;
