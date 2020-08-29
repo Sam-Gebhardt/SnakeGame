@@ -22,18 +22,20 @@ void upper(char str[BUFSIZ]) {
 
 void high_score(Data* lData) {
 
-	FILE *f;
+	FILE *f = NULL;
 	int high, x, y, new = 0;
 	attron(COLOR_PAIR(3));
 
 	if (access(".highscore.txt", F_OK == -1)) { //file does not exsist
 		f = fopen(".highscore.txt", "w");
 		fprintf(f, "%d", lData->score);
+		fclose(f);
 
 	} else {									//file does exsist
 		f = fopen(".highscore.txt", "r+");
 		fscanf(f, "%d", &high);
 		fclose(f);
+		f = NULL;
 
 		if (lData->score > high) {
 			f = fopen(".highscore.txt", "w+");
@@ -47,9 +49,10 @@ void high_score(Data* lData) {
 		int score = (new) ? lData->score : high;
 
 		mvprintw((y / 2) + 2, (x / 2) - displacement, message, score);
+		if (f != NULL)
+			fclose(f);
 	}
-	if (f != NULL)
-		fclose(f);
+
 	attroff(COLOR_PAIR(3));
 }
 
@@ -187,7 +190,7 @@ void cleanup(Data* lData) {
 	mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
 	attroff(COLOR_PAIR(3));
 
-	high_score(lData);
+	high_score(lData); // fix mem issues
 	free_list(lData);
 
 	refresh();
