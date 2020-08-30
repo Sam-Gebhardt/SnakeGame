@@ -35,7 +35,7 @@ void high_score(Data* lData) {
 		f = fopen(".highscore.txt", "r+");
 		fscanf(f, "%d", &high);
 		fclose(f);
-		f = NULL;
+		f = NULL; // always null pointers
 
 		if (lData->score > high) {
 			f = fopen(".highscore.txt", "w+");
@@ -85,9 +85,6 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ]) {
 	if (strstr(possible_colors, snake_c) == NULL ||
 	    strstr(possible_colors, apple_c) == NULL) {
 
-		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
-		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
-
 		clear();
 		attron(COLOR_PAIR(1));
 		mvprintw(0, 1, "Invalid color: Using default");
@@ -105,7 +102,7 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ]) {
 	apple_convert = convert_color_input(apple_c);
 
 	printf("%d and %d", snake_convert, apple_convert);
-	init_pair(1, snake_convert, COLOR_BLACK); // snake
+	init_pair(1, snake_convert, COLOR_BLACK);   // snake
 	init_pair(2, apple_convert, COLOR_BLACK);   // apple
 }
 
@@ -448,6 +445,8 @@ int screen_init(int max_x, int max_y) {
 	}
 
 	start_color();
+	init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
+	init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
 	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
 	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
 	wbkgd(stdscr, COLOR_PAIR(4));
@@ -495,10 +494,7 @@ int main() {
 	if (input == 's') {
 		custom_color();
 		speed = custom_speed();
-	} else {
-		init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
-		init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
-	}
+	} 
 
 	nodelay(stdscr, true);
 	Data* lData = create_snake(max_x, max_y);
