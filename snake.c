@@ -78,12 +78,13 @@ int convert_color_input(char color[BUFSIZ]) {
 
 }
 
-void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ]) {
-	char possible_colors[BUFSIZ] = "black|red|green|yellow|blue|magenta|cyan|white";
-	int snake_convert, apple_convert;
+void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ], char background_c[BUFSIZ]) {
+	char possible_colors[46] = "black|red|green|yellow|blue|magenta|cyan|white";
+	int snake_convert, apple_convert, back_convert;
 
 	if (strstr(possible_colors, snake_c) == NULL ||
-	    strstr(possible_colors, apple_c) == NULL) {
+	    strstr(possible_colors, apple_c) == NULL ||
+		strstr(possible_colors, background_c) == NULL) {
 
 		clear();
 		attron(COLOR_PAIR(1));
@@ -97,20 +98,32 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ]) {
 	}
 	upper(snake_c);
 	upper(apple_c);
+	upper(background_c);
 
 	snake_convert = convert_color_input(snake_c);
 	apple_convert = convert_color_input(apple_c);
+	back_convert = convert_color_input(background_c);
+
+	if (snake_convert == back_convert || apple_convert == back_convert) {
+		attron(COLOR_PAIR(1));
+		mvprintw(0, 1, "Background color must be unique: Using default");
+		attroff(COLOR_PAIR(1));
+		refresh();
+		sleep(1);
+		return;
+	}
 
 	printf("%d and %d", snake_convert, apple_convert);
-	init_pair(1, snake_convert, COLOR_BLACK);   // snake
-	init_pair(2, apple_convert, COLOR_BLACK);   // apple
+	init_pair(1, snake_convert, back_convert);   // snake
+	init_pair(2, apple_convert, back_convert);   // apple
+	init_pair(4, back_convert, back_convert);    // background
 }
 
 void custom_color(void) {
 
 	int max_y;
-	char snake_c[BUFSIZ], apple_c[BUFSIZ];
-	char colors[BUFSIZ] = "\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite";
+	char snake_c[BUFSIZ], apple_c[BUFSIZ], back_c[BUFSIZ];
+	char colors[54] = "\nblack \nred \ngreen \nyellow \nblue \nmagenta \ncyan \nwhite";
 
 	max_y = getmaxy(stdscr);
 	clear();
@@ -121,9 +134,12 @@ void custom_color(void) {
 	mvprintw(max_y / 2, 0, "Pick a color(for apple): %s", colors);
 	getstr(apple_c);
 
+	mvprintw(max_y / 2, 0, "Pick a color(for background) must be unique: %s", colors);
+	getstr(back_c);
+
 	refresh();
 	attroff(COLOR_PAIR(3));
-	process_color(snake_c, apple_c);
+	process_color(snake_c, apple_c, back_c);
 
 	getchar();
 }
@@ -132,7 +148,7 @@ void custom_color(void) {
 int custom_speed(void) {
 	// allow for faster or slower speed
 	int max_x, max_y, speed;
-	char message[BUFSIZ] = "Enter custom speed(default is 3.6s):";
+	char message[36] = "Enter custom speed(default is 3.6s):";
 	char speed_str[10];
 
 	clear();
@@ -449,8 +465,6 @@ int screen_init(int max_x, int max_y) {
 	init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
 	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
 	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
-	wbkgd(stdscr, COLOR_PAIR(4));
-
 
 	attron(COLOR_PAIR(3));
 	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
@@ -495,6 +509,8 @@ int main() {
 		custom_color();
 		speed = custom_speed();
 	} 
+	wbkgd(stdscr, COLOR_PAIR(4));
+
 
 	nodelay(stdscr, true);
 	Data* lData = create_snake(max_x, max_y);

@@ -1,6 +1,7 @@
 #ifndef SNAKE_H_
 #define SNAKE_H_
 
+
 typedef struct node {
 	struct node *next;
 	struct node *prev;
@@ -51,7 +52,7 @@ int convert_color_input(char color[10]);
     */
 
 
-void process_color(char snake_c[10], char apple_c[10]);
+void process_color(char snake_c[10], char apple_c[10], char back_c[10]);
     /*
     Check if the inputed color is valid and creates a color pair if it is.
     */
@@ -116,6 +117,12 @@ void move_snake(Data* lData);
 	/*
     Updates the snake's position on the screen.
 	*/
+
+
+void snake_sleep(Data* lData, int max_x, int max_y, int speed);
+    /*
+    Create a delay so the snake moves at a reasonable speed
+    */
 
 
 void grow_snake(Data* lData);
