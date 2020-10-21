@@ -44,7 +44,7 @@ void high_score(Data* lData) {
 		} 
 
 		getmaxyx(stdscr, y, x);
-		char *message = (new) ?  "New high score!: %d" : "High Score: %d";
+		char *message = (new) ?  "New High Score!: %d" : "High Score: %d";
 		int displacement = (new) ? 10 : 7;
 		int score = (new) ? lData->score : high;
 
@@ -73,7 +73,7 @@ int convert_color_input(char color[BUFSIZ]) {
 		return 5;
 	else if (strcmp(color, "CYAN") == 0)
 		return 6; 
-	else //(strcmp(color, "WHITE")
+	else 
 		return 7;
 
 }
@@ -82,7 +82,7 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ], char background_c
 	char possible_colors[46] = "black|red|green|yellow|blue|magenta|cyan|white";
 	int snake_convert, apple_convert, back_convert;
 
-	if (strstr(possible_colors, snake_c) == NULL ||
+	if (strstr(possible_colors, snake_c) == NULL ||  // make sure color in put is valid
 	    strstr(possible_colors, apple_c) == NULL ||
 		strstr(possible_colors, background_c) == NULL) {
 
@@ -97,7 +97,7 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ], char background_c
 		return;
 	}
 	upper(snake_c);
-	upper(apple_c);
+	upper(apple_c); // upper case inpur
 	upper(background_c);
 
 	snake_convert = convert_color_input(snake_c);
@@ -117,6 +117,8 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ], char background_c
 	init_pair(1, snake_convert, back_convert);   // snake
 	init_pair(2, apple_convert, back_convert);   // apple
 	init_pair(4, back_convert, back_convert);    // background
+	// intialize custom color pairs based on user input, overwrites
+	// orginal pairs in main()
 }
 
 void custom_color(void) {
@@ -148,7 +150,7 @@ void custom_color(void) {
 int custom_speed(void) {
 	// allow for faster or slower speed
 	int max_x, max_y, speed;
-	char message[36] = "Enter custom speed(default is 3.6s):";
+	char message[37] = "Enter custom speed(default is 3.6s):";
 	char speed_str[10];
 
 	clear();
@@ -173,14 +175,6 @@ int custom_speed(void) {
 }
 
 
-void settings(void) {
-	int input = getchar();
-
-	if (input != 's') {
-
-	}
-}
-
 void free_list(Data* lData) {
 	Node* current = lData->head;
 	Node* next;
@@ -203,7 +197,7 @@ void cleanup(Data* lData) {
 	mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
 	attroff(COLOR_PAIR(3));
 
-	high_score(lData); // fix mem issues
+	high_score(lData);
 	free_list(lData);
 
 	refresh();
@@ -348,20 +342,22 @@ void move_snake(Data* lData) {
 	mvprintw(current->y_cord, current->x_cord, head);
 	current = current->next;
 
-	while (current != NULL) {
+	while (current != NULL) { 
+		//loop through the snake and change cords
+		//based on if it needs to change direction ofrnot
 
 		if (current != lData->head->next && ! current->pivot) {
 			x -= current->prev->x_direction;
 			y -= current->prev->y_direction;
 			current->x_cord = x;
 			current->y_cord = y;
-		} else if (current->pivot == 1) {
+		} else if (current->pivot == 1) {  // Change direction for the next loop
 			x -= current->x_direction;
 			y -= current->y_direction;
 			current->x_cord += current->x_direction;
 			current->y_cord += current->y_direction;
 			current->pivot ++;
-		} else if (current->pivot == 2) {
+		} else if (current->pivot == 2) { //reset direction and set next node as a pivot
 			x -= current->prev->x_direction;
 			y -= current->prev->y_direction;
 			current->x_cord = x;
@@ -372,12 +368,6 @@ void move_snake(Data* lData) {
 			if (current->next != NULL)
 				current->next->pivot = 1;
 		}
-
-		/*
-		TODO: 
-		Change in directions arent perfect 90 degress
-		moving parrell to the body shifts the whole snake up/down
-		*/
 
 		mvprintw(y, x, "*");
 		current = current->next;
@@ -446,6 +436,7 @@ int collion(Data* lData, int past_x, int past_y) {
 	return lData->head->x_cord >= max_x || lData->head->x_cord < 0 || 
 		lData->head->y_cord >= max_y || lData->head->y_cord < 0 || 
 		backwards(lData, past_x, past_y);
+		// check if the snake has gone out of bounds or eaten itself
 }
 
 int screen_init(int max_x, int max_y) {
@@ -466,10 +457,11 @@ int screen_init(int max_x, int max_y) {
 	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
 	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
 
-	attron(COLOR_PAIR(3));
+	attron(COLOR_PAIR(3));  //toggle color on
 	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
-	attroff(COLOR_PAIR(3));
+	mvprintw(max_y / 2 + 1, max_x / 2 - 12, "Press 's' for settings!");
+	attroff(COLOR_PAIR(3));  //toggle color off
 
 	refresh();
 	return 0;
@@ -542,11 +534,8 @@ int main() {
 	}
 }
 
-/* TODO:
-
-**Readability** 
-Clean up main before loop
-
-allow for custom speed and custom color
-
-*/
+		/*
+		TODO: 
+		Change in directions arent perfect 90 degress
+		moving parrell to the body shifts the whole snake up/down
+		*/
