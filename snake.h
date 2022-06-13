@@ -9,11 +9,9 @@ typedef struct node {
 	int y_cord;
 	int x_direction;
 	int y_direction;
-	int pivot; // change in direction (causes "snake" effect)
     /*
     A linked list node that serves as the snake. Holds the current location on the
-    screen in x/y_cord, the current direction the node is moving in x/y_direction, 
-    and if the node is a pivot.
+    screen in x/y_cords and the current direction the node is moving in x/y_direction.
     */
 } Node;
 
@@ -47,7 +45,7 @@ void high_score(Data* lData);
 
 int convert_color_input(char color[10]);
     /*
-    Converts the str of a color into its integar representation in curses.
+    Converts the str of a color into its integar representation in ncurses.
     ie "BLACK" -> 0
     */
 

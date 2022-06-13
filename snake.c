@@ -26,19 +26,19 @@ void high_score(Data* lData) {
 	int high, x, y, new = 0;
 	attron(COLOR_PAIR(3));
 
-	if (access(".highscore.txt", F_OK == -1)) { //file does not exsist
-		f = fopen(".highscore.txt", "w");
+	if (access("/home/sam/Documents/project/snake_game/.highscore.txt", F_OK == -1)) { //file does not exsist
+		f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "w");
 		fprintf(f, "%d", lData->score);
 		fclose(f);
 
 	} else {									//file does exsist
-		f = fopen(".highscore.txt", "r+");
+		f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "r+");
 		fscanf(f, "%d", &high);
 		fclose(f);
 		f = NULL; // always null pointers
 
 		if (lData->score > high) {
-			f = fopen(".highscore.txt", "w+");
+			f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "w+");
 			fprintf(f, "%d", lData->score);
 			new = 1;
 		} 
@@ -229,6 +229,7 @@ char *head_of_the_snake(Data* lData) {
 
 
 void gen_apple(Data* lData) {
+	
 	Node* current = lData->head->next;
 	int max_y, max_x, repick = 0;
 	getmaxyx(stdscr, max_y, max_x);
@@ -274,10 +275,6 @@ void update_direction(Data* lData) {
 	
 	lData->head->next->x_direction = lData->head->x_direction;
 	lData->head->next->y_direction = lData->head->y_direction;
-
-	if (lData->head->next->next != NULL) {
-		lData->head->next->next->pivot = 1;
-	}
 }
 
 int get_move(Data* lData, int move) {
@@ -335,44 +332,64 @@ void move_snake(Data* lData) {
 	mvprintw(0, max_x - 3, "%d", lData->score); // current score
 	attroff(COLOR_PAIR(3));
 
-	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) 
-		grow_snake(lData);
-	
 	attron(COLOR_PAIR(1));
 	mvprintw(current->y_cord, current->x_cord, head);
-	current = current->next;
 
-	while (current != NULL) { 
-		//loop through the snake and change cords
-		//based on if it needs to change direction ofrnot
+	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) {
+		grow_snake(lData);
+	}
 
-		if (current != lData->head->next && ! current->pivot) {
-			x -= current->prev->x_direction;
-			y -= current->prev->y_direction;
-			current->x_cord = x;
-			current->y_cord = y;
-		} else if (current->pivot == 1) {  // Change direction for the next loop
-			x -= current->x_direction;
-			y -= current->y_direction;
-			current->x_cord += current->x_direction;
-			current->y_cord += current->y_direction;
-			current->pivot ++;
-		} else if (current->pivot == 2) { //reset direction and set next node as a pivot
-			x -= current->prev->x_direction;
-			y -= current->prev->y_direction;
-			current->x_cord = x;
-			current->y_cord = y;
-			current->x_direction = current->prev->x_direction;
-			current->y_direction = current->prev->y_direction;
-			current->pivot = 0;
-			if (current->next != NULL)
-				current->next->pivot = 1;
-		}
+	if (lData->score > 1) {
 
-		mvprintw(y, x, "*");
+		// < *** (23, 13)
+		/*
+		tmp = (23, 13)
+
+		h [Null, 0]
+		0 [head, 1]
+		1 [0, 2]
+		2(t) [1, Null]
+
+		h [Null 2]
+		2 [head, 0]
+		0 [head, 1]
+		1(t) [0, Null]
+
+		*/
+
+		Node* tmp = lData->tail;
+
+		// Removing old tail
+		lData->tail = lData->tail->prev;
+		lData->tail->next = NULL;
+
+		// Add old tail to new position
+		tmp->prev = lData->head;
+		tmp->next = lData->head->next;
+		tmp->next->prev = tmp;
+		lData->head->next = tmp;
+
+
+		// position is same as old pos of head
+		tmp->x_cord = x;
+		tmp->y_cord = y;
+
+		tmp->x_direction = lData->head->x_direction;
+		tmp->y_direction = lData->head->y_direction;
+
+	} else if (lData->score == 1) {
+		lData->tail->x_cord = x;
+		lData->tail->y_cord = y;
+	}
+	
+	current = lData->head->next;
+
+	while(current != NULL) {
+		mvprintw(current->y_cord, current->x_cord, "*");
 		current = current->next;
 
 	}
+
 	refresh();
 	attroff(COLOR_PAIR(1));
 }
@@ -401,7 +418,6 @@ void grow_snake(Data* lData) {
 
 	new->x_direction = lData->tail->x_direction;
 	new->y_direction = lData->tail->y_direction;
-	new->pivot = 0;
 
 	new->next = NULL;
 	new->prev = lData->tail;
@@ -477,12 +493,11 @@ Data* create_snake(int max_x, int max_y) {
 
 	head->x_direction = 1;
 	head->y_direction = 0;
-	head->pivot = 0;
 
 	head->x_cord = max_x / 2;
 	head->y_cord = max_y / 2;
 
-	head->prev = NULL;
+	head->prev = head;
 	head->next = NULL;
 
 	return lData;
@@ -502,7 +517,6 @@ int main() {
 		speed = custom_speed();
 	} 
 	wbkgd(stdscr, COLOR_PAIR(4));
-
 
 	nodelay(stdscr, true);
 	Data* lData = create_snake(max_x, max_y);
