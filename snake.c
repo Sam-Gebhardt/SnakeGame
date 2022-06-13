@@ -12,6 +12,12 @@ Basic terminal snake game
 #include <ctype.h>
 #include "snake.h"
 
+// Color ints
+#define SNAKE_COLOR 1
+#define APPLE_COLOR 2
+#define TEXT_COLOR 3
+#define BACKGROUND_COLOR 4
+
 
 void upper(char str[BUFSIZ]) {
 	for (int i = 0; str[i] != '\0'; i++) {
@@ -24,7 +30,7 @@ void high_score(Data* lData) {
 
 	FILE *f = NULL;
 	int high, x, y, new = 0;
-	attron(COLOR_PAIR(3));
+	attron(COLOR_PAIR(TEXT_COLOR));
 
 	if (access("/home/sam/Documents/project/snake_game/.highscore.txt", F_OK == -1)) { //file does not exsist
 		f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "w");
@@ -53,7 +59,7 @@ void high_score(Data* lData) {
 			fclose(f);
 	}
 
-	attroff(COLOR_PAIR(3));
+	attroff(COLOR_PAIR(TEXT_COLOR));
 }
 
 int convert_color_input(char color[BUFSIZ]) {
@@ -87,17 +93,18 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ], char background_c
 		strstr(possible_colors, background_c) == NULL) {
 
 		clear();
-		attron(COLOR_PAIR(1));
+		attron(COLOR_PAIR(SNAKE_COLOR));
 		mvprintw(0, 1, "Invalid color: Using default");
 
 		refresh();
-		attroff(COLOR_PAIR(1));
+		attroff(COLOR_PAIR(SNAKE_COLOR));
 
 		sleep(1);
 		return;
 	}
+
 	upper(snake_c);
-	upper(apple_c); // upper case inpur
+	upper(apple_c);
 	upper(background_c);
 
 	snake_convert = convert_color_input(snake_c);
@@ -105,20 +112,19 @@ void process_color(char snake_c[BUFSIZ], char apple_c[BUFSIZ], char background_c
 	back_convert = convert_color_input(background_c);
 
 	if (snake_convert == back_convert || apple_convert == back_convert) {
-		attron(COLOR_PAIR(1));
+		attron(COLOR_PAIR(SNAKE_COLOR));
 		mvprintw(0, 1, "Background color must be unique: Using default");
-		attroff(COLOR_PAIR(1));
+		attroff(COLOR_PAIR(SNAKE_COLOR));
 		refresh();
 		sleep(1);
 		return;
 	}
 
 	printf("%d and %d", snake_convert, apple_convert);
-	init_pair(1, snake_convert, back_convert);   // snake
-	init_pair(2, apple_convert, back_convert);   // apple
-	init_pair(4, back_convert, back_convert);    // background
-	// intialize custom color pairs based on user input, overwrites
-	// orginal pairs in main()
+	init_pair(SNAKE_COLOR, snake_convert, back_convert);
+	init_pair(APPLE_COLOR, apple_convert, back_convert);
+	init_pair(BACKGROUND_COLOR, back_convert, back_convert);
+	// overwrites orginal pairs in main() based on input
 }
 
 void custom_color(void) {
@@ -129,7 +135,7 @@ void custom_color(void) {
 
 	max_y = getmaxy(stdscr);
 	clear();
-	attron(COLOR_PAIR(3));
+	attron(COLOR_PAIR(TEXT_COLOR));
 	mvprintw(max_y / 2, 0, "Pick a color(for snake): %s", colors);
 	getstr(snake_c);
 
@@ -140,7 +146,7 @@ void custom_color(void) {
 	getstr(back_c);
 
 	refresh();
-	attroff(COLOR_PAIR(3));
+	attroff(COLOR_PAIR(TEXT_COLOR));
 	process_color(snake_c, apple_c, back_c);
 
 	getchar();
@@ -155,9 +161,9 @@ int custom_speed(void) {
 
 	clear();
 	getmaxyx(stdscr, max_y, max_x);
-	attron(COLOR_PAIR(3));
+	attron(COLOR_PAIR(TEXT_COLOR));
 	mvprintw(max_y / 2, max_x / 2 - 40, "%s", message);
-	attroff(COLOR_PAIR(3));
+	attroff(COLOR_PAIR(TEXT_COLOR));
 	refresh();
 	getstr(speed_str);
 
@@ -192,10 +198,10 @@ void cleanup(Data* lData) {
 	getmaxyx(stdscr, max_y, max_x);
 	clear();
 
-	attron(COLOR_PAIR(3));
+	attron(COLOR_PAIR(TEXT_COLOR));
 	mvprintw(max_y / 2, max_x / 2 - 5, "Game Over!");
 	mvprintw(max_y / 2 + 1, max_x / 2 - 4, "Score: %d", lData->score);
-	attroff(COLOR_PAIR(3));
+	attroff(COLOR_PAIR(TEXT_COLOR));
 
 	high_score(lData);
 	free_list(lData);
@@ -324,15 +330,15 @@ void move_snake(Data* lData) {
 	current->x_cord += current->x_direction;
 	current->y_cord += current->y_direction;
 
-	attron(COLOR_PAIR(2));
+	attron(COLOR_PAIR(APPLE_COLOR));
 	mvprintw(lData->y_apple, lData->x_apple, "@");
-	attroff(COLOR_PAIR(2));
+	attroff(COLOR_PAIR(APPLE_COLOR));
 
-	attron(COLOR_PAIR(3));
+	attron(COLOR_PAIR(TEXT_COLOR));
 	mvprintw(0, max_x - 3, "%d", lData->score); // current score
-	attroff(COLOR_PAIR(3));
+	attroff(COLOR_PAIR(TEXT_COLOR));
 
-	attron(COLOR_PAIR(1));
+	attron(COLOR_PAIR(SNAKE_COLOR));
 	mvprintw(current->y_cord, current->x_cord, head);
 
 	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) {
@@ -340,22 +346,6 @@ void move_snake(Data* lData) {
 	}
 
 	if (lData->score > 1) {
-
-		// < *** (23, 13)
-		/*
-		tmp = (23, 13)
-
-		h [Null, 0]
-		0 [head, 1]
-		1 [0, 2]
-		2(t) [1, Null]
-
-		h [Null 2]
-		2 [head, 0]
-		0 [head, 1]
-		1(t) [0, Null]
-
-		*/
 
 		Node* tmp = lData->tail;
 
@@ -368,7 +358,6 @@ void move_snake(Data* lData) {
 		tmp->next = lData->head->next;
 		tmp->next->prev = tmp;
 		lData->head->next = tmp;
-
 
 		// position is same as old pos of head
 		tmp->x_cord = x;
@@ -391,7 +380,7 @@ void move_snake(Data* lData) {
 	}
 
 	refresh();
-	attroff(COLOR_PAIR(1));
+	attroff(COLOR_PAIR(SNAKE_COLOR));
 }
 
 void snake_sleep(Data* lData, int max_x, int max_y, int speed) {
@@ -468,16 +457,16 @@ int screen_init(int max_x, int max_y) {
 	}
 
 	start_color();
-	init_pair(1, COLOR_GREEN, COLOR_BLACK); // snake
-	init_pair(2, COLOR_RED, COLOR_BLACK);   // apple
-	init_pair(3, COLOR_BLUE, COLOR_BLACK); // text
-	init_pair(4, COLOR_BLACK, COLOR_BLACK); // background
+	init_pair(SNAKE_COLOR, COLOR_GREEN, COLOR_BLACK);
+	init_pair(APPLE_COLOR, COLOR_RED, COLOR_BLACK);
+	init_pair(TEXT_COLOR, COLOR_BLUE, COLOR_BLACK);
+	init_pair(BACKGROUND_COLOR, COLOR_BLACK, COLOR_BLACK);
 
-	attron(COLOR_PAIR(3));  //toggle color on
+	attron(COLOR_PAIR(TEXT_COLOR));  //toggle color on
 	mvprintw(max_y / 2 - 1, max_x / 2 - 7, "Classic Snake");
 	mvprintw(max_y / 2, max_x / 2, ">");
 	mvprintw(max_y / 2 + 1, max_x / 2 - 12, "Press 's' for settings!");
-	attroff(COLOR_PAIR(3));  //toggle color off
+	attroff(COLOR_PAIR(TEXT_COLOR));  //toggle color off
 
 	refresh();
 	return 0;
@@ -516,7 +505,7 @@ int main() {
 		custom_color();
 		speed = custom_speed();
 	} 
-	wbkgd(stdscr, COLOR_PAIR(4));
+	wbkgd(stdscr, COLOR_PAIR(BACKGROUND_COLOR));
 
 	nodelay(stdscr, true);
 	Data* lData = create_snake(max_x, max_y);
