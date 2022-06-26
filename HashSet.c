@@ -82,7 +82,12 @@ void set_remove(Set s, int x, int y) {
     SetNode* cur = s.buckets[hash];
     SetNode* prev = NULL;
 
-    while (cur->vals[0] != x && cur->vals[1] != y) {
+    // Set doesn't contain item
+    if (cur == NULL) {
+        return;
+    }
+
+    while (cur != NULL && cur->vals[0] != x && cur->vals[1] != y) {
         prev = cur;
         cur = cur->next;
     }
@@ -90,10 +95,11 @@ void set_remove(Set s, int x, int y) {
     // Check if first element
     if (prev != NULL) {
         prev->next = cur->next;
+    } else {
+        s.buckets[hash] = cur->next;
     }
 
     free(cur);
-
 }
 
 
@@ -103,7 +109,7 @@ int* set_random(Set s) {
 
     int pos = rand() % s.size;
 
-    for (int i = pos; i < s.size; i++) {
+    for (int i = pos; i != pos - 1; i++) {
         if (i == s.size) {
             i = 0;
         }
@@ -113,6 +119,6 @@ int* set_random(Set s) {
         }
     }
     // will never reach here
-    return s.buckets[pos]->vals;
+    return s.buckets[pos - 1]->vals;
 }
 
