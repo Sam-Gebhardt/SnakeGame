@@ -11,6 +11,11 @@ Basic terminal snake game
 #include <string.h>
 #include <ctype.h>
 #include "snake.h"
+#include "HashSet.h"
+
+void log(char* str) {
+
+}
 
 // Color ints
 #define SNAKE_COLOR 1
@@ -47,7 +52,7 @@ void high_score(Data* lData) {
 			f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "w+");
 			fprintf(f, "%d", lData->score);
 			new = 1;
-		} 
+		}
 
 		getmaxyx(stdscr, y, x);
 		char *message = (new) ?  "New High Score!: %d" : "High Score: %d";
@@ -78,8 +83,8 @@ int convert_color_input(char color[BUFSIZ]) {
 	else if (strcmp(color, "MAGENTA") == 0)
 		return 5;
 	else if (strcmp(color, "CYAN") == 0)
-		return 6; 
-	else 
+		return 6;
+	else
 		return 7;
 
 }
@@ -174,9 +179,9 @@ int custom_speed(void) {
 	}
 
 	speed = atoi(speed_str);
-	if (speed <= 0) 
+	if (speed <= 0)
 		return 0;
-	
+
 	return speed;
 }
 
@@ -193,7 +198,7 @@ void free_list(Data* lData) {
 	free(lData);
 }
 
-void cleanup(Data* lData) {
+void cleanup(Data* lData, Set available) {
 	int max_x, max_y;
 	getmaxyx(stdscr, max_y, max_x);
 	clear();
@@ -205,6 +210,7 @@ void cleanup(Data* lData) {
 
 	high_score(lData);
 	free_list(lData);
+	set_destroy(available);
 
 	refresh();
 	getchar();
@@ -234,43 +240,27 @@ char *head_of_the_snake(Data* lData) {
 }
 
 
-void gen_apple(Data* lData) {
-	
-	Node* current = lData->head->next;
-	int max_y, max_x, repick = 0;
-	getmaxyx(stdscr, max_y, max_x);
-	
-	while (1) { 
-		/* 
-		keep looping till a valid cord pair is found
-		Very inefficent as the snake grows larger, TODO: make a faster/better 
-		method to spawn apples on the screen.
-		*/
+void gen_apple(Data* lData, Set available) {
 
-		srand(time(NULL));
-		lData->x_apple = (rand() % max_x);
-		lData->y_apple = (rand() % max_y);
+	// Node* current = lData->head->next;
+	// int max_y, max_x;
+	// getmaxyx(stdscr, max_y, max_x);
 
-		while (current != NULL) {
-			if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) {
-				repick = 1;
-				break;
-			}
-			current = current->next;
-		}
-		if (! repick)
-			break;
-	}
+	int* vals = set_random(available);
+
+	lData->x_apple = (vals[0]);
+	lData->y_apple = (vals[1]);
+
 }
 
 int backwards(Data* lData, int past_x, int past_y) {
 
-	if (lData->head->x_direction * -1 == past_x && past_x != 0) 
+	if (lData->head->x_direction * -1 == past_x && past_x != 0)
 		return 1;
-	
+
 	if (lData->head->y_direction * -1 == past_y && past_y != 0 )
 		return 1;
-	
+
 	return 0;
 }
 
@@ -278,7 +268,7 @@ void update_direction(Data* lData) {
 
 	if (lData->head->next == NULL)
 		return;
-	
+
 	lData->head->next->x_direction = lData->head->x_direction;
 	lData->head->next->y_direction = lData->head->y_direction;
 }
@@ -288,25 +278,25 @@ int get_move(Data* lData, int move) {
 	switch(move) {
 		case 'w':
 		case KEY_UP:
-			lData->head->x_direction = 0; 
+			lData->head->x_direction = 0;
 			lData->head->y_direction = -1;
 			change = 1;
 			break;
 		case 's':
 		case KEY_DOWN:
-			lData->head->x_direction = 0; 
+			lData->head->x_direction = 0;
 			lData->head->y_direction = 1;
 			change = 1;
 			break;
 		case 'd':
 		case KEY_RIGHT:
-			lData->head->x_direction = 1; 
+			lData->head->x_direction = 1;
 			lData->head->y_direction = 0;
 			change = 1;
 			break;
 		case 'a':
 		case KEY_LEFT:
-			lData->head->x_direction = -1; 
+			lData->head->x_direction = -1;
 			lData->head->y_direction = 0;
 			change = 1;
 			break;
@@ -317,7 +307,7 @@ int get_move(Data* lData, int move) {
 }
 
 
-void move_snake(Data* lData) {
+void move_snake(Data* lData, Set available) {
 
 	clear();
 	char *head = head_of_the_snake(lData);
@@ -335,17 +325,25 @@ void move_snake(Data* lData) {
 	attroff(COLOR_PAIR(APPLE_COLOR));
 
 	attron(COLOR_PAIR(TEXT_COLOR));
-	mvprintw(0, max_x - 3, "%d", lData->score); // current score
+	mvprintw(0, max_x - 3, "%d", lData->score);
 	attroff(COLOR_PAIR(TEXT_COLOR));
 
 	attron(COLOR_PAIR(SNAKE_COLOR));
 	mvprintw(current->y_cord, current->x_cord, head);
 
+	// Remove new head pos from aval
+	set_remove(available, x, y);
+
 	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) {
 		grow_snake(lData);
+		set_remove(available, lData->tail->x_cord, lData->tail->y_cord);
+		gen_apple(lData, available);
 	}
 
 	if (lData->score > 1) {
+
+		// Add old tail back into aval pos
+		set_add(available, lData->tail->x_cord, lData->tail->y_cord);
 
 		Node* tmp = lData->tail;
 
@@ -367,16 +365,18 @@ void move_snake(Data* lData) {
 		tmp->y_direction = lData->head->y_direction;
 
 	} else if (lData->score == 1) {
+		// Add old head pos back into aval
+		set_add(available, lData->tail->x_cord, lData->tail->y_cord);
+
 		lData->tail->x_cord = x;
 		lData->tail->y_cord = y;
 	}
-	
+
 	current = lData->head->next;
 
 	while(current != NULL) {
 		mvprintw(current->y_cord, current->x_cord, "*");
 		current = current->next;
-
 	}
 
 	refresh();
@@ -400,7 +400,7 @@ void snake_sleep(Data* lData, int max_x, int max_y, int speed) {
 }
 
 void grow_snake(Data* lData) {
-	
+
 	Node* new = (Node*)malloc(sizeof(Node));
 	new->x_cord = lData->tail->x_cord - lData->tail->x_direction;
 	new->y_cord = lData->tail->y_cord - lData->tail->y_direction;
@@ -415,7 +415,6 @@ void grow_snake(Data* lData) {
 	lData->tail = new;
 	lData->score ++;
 
-	gen_apple(lData); // put another apple on the screen
 }
 
 int collion(Data* lData, int past_x, int past_y) {
@@ -438,14 +437,14 @@ int collion(Data* lData, int past_x, int past_y) {
 		current = current->next;
 	}
 
-	return lData->head->x_cord >= max_x || lData->head->x_cord < 0 || 
-		lData->head->y_cord >= max_y || lData->head->y_cord < 0 || 
+	return lData->head->x_cord >= max_x || lData->head->x_cord < 0 ||
+		lData->head->y_cord >= max_y || lData->head->y_cord < 0 ||
 		backwards(lData, past_x, past_y);
 		// check if the snake has gone out of bounds or eaten itself
 }
 
 int screen_init(int max_x, int max_y) {
-	
+
 	noecho();  // no keyboard input
 	curs_set(FALSE);
 	keypad(stdscr, TRUE);
@@ -497,48 +496,56 @@ int main() {
 
 	initscr();
 	getmaxyx(stdscr, max_y, max_x);
-	if (screen_init(max_x, max_y)) 
+	if (screen_init(max_x, max_y))
 		return 1;
 
 	int input = getchar();
 	if (input == 's') {
 		custom_color();
 		speed = custom_speed();
-	} 
-	wbkgd(stdscr, COLOR_PAIR(BACKGROUND_COLOR));
+	}
 
+	wbkgd(stdscr, COLOR_PAIR(BACKGROUND_COLOR));
 	nodelay(stdscr, true);
+
+	// Make the snake
 	Data* lData = create_snake(max_x, max_y);
-	gen_apple(lData);
+
+	// Create set of open spaces for apple to generate
+	Set available = set_create(max_x * max_y);
+
+	// Fill it with open spots
+	for (int i = 0; i < max_x; i++) {
+		for (int j = 0; j < max_y; j++) {
+			set_add(available, i, j);
+		}
+	}
+
+	// Remove the starting pos
+	// set_remove(available, lData->head->x_cord, lData->head->y_cord);
+
+	gen_apple(lData, available);
 	mvprintw(lData->y_apple, lData->x_apple, "@");
 
 	while(1) {
-		
+
 		int move = getch();
 		int past_x = lData->head->x_direction, past_y = lData->head->y_direction;
 
 		int change = get_move(lData, move);
 
-		if (change == -1) {
-			cleanup(lData);
+		update_direction(lData);
+
+		move_snake(lData, available);
+
+		// change == -1 is when the user presses "esc"
+		if (collion(lData, past_x, past_y) || change == -1) {
+			cleanup(lData, available);
 			return 0;
 		}
-		if (change)
-			update_direction(lData);
-		
-		move_snake(lData);
-
-		if (collion(lData, past_x, past_y)) {
-
-			cleanup(lData);
-			return 0;
-		}
-	snake_sleep(lData, max_x, max_y, speed);
+		snake_sleep(lData, max_x, max_y, speed);
 	}
 }
 
-		/*
-		TODO: 
-		Change in directions arent perfect 90 degress
-		moving parrell to the body shifts the whole snake up/down
-		*/
+//todo:Add optimizatkion
+

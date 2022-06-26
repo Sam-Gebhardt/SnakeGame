@@ -1,6 +1,7 @@
 #ifndef SNAKE_H_
 #define SNAKE_H_
 
+#include "HashSet.h"
 
 typedef struct node {
 	struct node *next;
@@ -18,7 +19,7 @@ typedef struct node {
 typedef struct data {
 	struct node *head;
 	struct node *tail;
-	int score; 
+	int score;
 	int x_apple;
 	int y_apple;
     /*
@@ -38,7 +39,7 @@ void upper(char str[10]);
 void high_score(Data* lData);
     /*
     Checks if the final score is higher than the highscore, if it is prints to the
-    screen that there is a new high score. If there is no high score a file highscore.txt 
+    screen that there is a new high score. If there is no high score a file highscore.txt
     is created.
     */
 
@@ -73,7 +74,7 @@ void free_list(Data* lData);
     */
 
 
-void cleanup(Data* lData);
+void cleanup(Data* lData, Set available);
 	/*
     Does everything required to terminate the program. Calls free_list(), displays the
     score and ends the window.
@@ -87,7 +88,7 @@ char *head_of_the_snake(Data* lData);
 	*/
 
 
-void gen_apple(Data* lData);
+void gen_apple(Data* lData, Set available);
 	/*
     Randomly picks a new place on the screen to spawn an apple.
 	*/
@@ -111,7 +112,7 @@ int get_move(Data* lData, int move);
 	*/
 
 
-void move_snake(Data* lData);
+void move_snake(Data* lData, Set availble);
 	/*
     Updates the snake's position on the screen.
 	*/
@@ -125,7 +126,7 @@ void snake_sleep(Data* lData, int max_x, int max_y, int speed);
 
 void grow_snake(Data* lData);
 	/*
-    Increases the size of the snake after an apple has been "eaten". 
+    Increases the size of the snake after an apple has been "eaten".
 	*/
 
 
