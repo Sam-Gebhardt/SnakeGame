@@ -11,19 +11,23 @@
 Set set_create(int buckets) {
     Set s;
     SetNode** b = malloc(sizeof(SetNode) * buckets);
+    s.size = malloc(sizeof(int));
 
     for (int i = 0; i < buckets; i++) {
         b[i] = NULL;
     }
+
     s.buckets = b;
-    s.size = buckets;
+    s.capacity = buckets;
+    (*s.size) = 0;
+
     return s;
 }
 
 // Destroy
 void set_destroy(Set s) {
 
-    for (int i = 0; i < s.size; i++) {
+    for (int i = 0; i < s.capacity; i++) {
         SetNode* cur = s.buckets[i];
         while (cur != NULL) {
             SetNode* tmp = cur->next;
@@ -33,14 +37,16 @@ void set_destroy(Set s) {
         }
     }
     free(s.buckets);
+    free(s.size);
 }
 
 
 // Add
 void set_add(Set s, int x, int y) {
-    int hash = (HASH * x + y) % s.size;
-    SetNode* cur = s.buckets[hash];
+    int hash = (HASH * x + y) % s.capacity;
+    (*s.size)++;
 
+    SetNode* cur = s.buckets[hash];
     SetNode* new = (SetNode*)malloc(sizeof(SetNode));;
 
     if (cur == NULL) {
@@ -77,7 +83,7 @@ void set_add(Set s, int x, int y) {
 
 // Remove
 void set_remove(Set s, int x, int y) {
-    int hash = (HASH * x + y) % s.size;
+    int hash = (HASH * x + y) % s.capacity;
 
     SetNode* cur = s.buckets[hash];
     SetNode* prev = NULL;
@@ -87,9 +93,13 @@ void set_remove(Set s, int x, int y) {
         return;
     }
 
-    while (cur != NULL && cur->vals[0] != x && cur->vals[1] != y) {
+    while (cur->vals[0] != x && cur->vals[1] != y) {
         prev = cur;
         cur = cur->next;
+
+        if (cur == NULL) {
+            return;
+        }
     }
 
     // Check if first element
@@ -99,6 +109,7 @@ void set_remove(Set s, int x, int y) {
         s.buckets[hash] = cur->next;
     }
 
+    (*s.size)--;
     free(cur);
 }
 
@@ -107,10 +118,10 @@ void set_remove(Set s, int x, int y) {
 int* set_random(Set s) {
     srand(time(NULL));
 
-    int pos = rand() % s.size;
+    int pos = rand() % s.capacity;
 
     for (int i = pos; i != pos - 1; i++) {
-        if (i == s.size) {
+        if (i == s.capacity) {
             i = 0;
         }
 

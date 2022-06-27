@@ -9,7 +9,8 @@ typedef struct set_node {
 } SetNode;
 
 typedef struct set {
-    int size;
+    int capacity;
+    int* size;
     struct set_node** buckets;
 } Set;
 
