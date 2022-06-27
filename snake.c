@@ -10,18 +10,25 @@ Basic terminal snake game
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "snake.h"
 #include "HashSet.h"
-
-void log(char* str) {
-
-}
+#include "logging.h"
 
 // Color ints
 #define SNAKE_COLOR 1
 #define APPLE_COLOR 2
 #define TEXT_COLOR 3
 #define BACKGROUND_COLOR 4
+
+// Path to highscore file
+#define HIGHSCORE_PATH "/home/sam/Documents/project/snake_game/.highscore.txt"
+
+// Path to log file
+#define LOG_PATH "/home/sam/Documents/project/snake_game/logs.txt"
+
+// Logging function
+static Log l;
 
 
 void upper(char str[BUFSIZ]) {
@@ -37,19 +44,20 @@ void high_score(Data* lData) {
 	int high, x, y, new = 0;
 	attron(COLOR_PAIR(TEXT_COLOR));
 
-	if (access("/home/sam/Documents/project/snake_game/.highscore.txt", F_OK == -1)) { //file does not exsist
-		f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "w");
+	//file does not exsist
+	if (access(HIGHSCORE_PATH, F_OK == -1)) {
+		f = fopen(HIGHSCORE_PATH, "w");
 		fprintf(f, "%d", lData->score);
 		fclose(f);
 
-	} else {									//file does exsist
-		f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "r+");
+	} else {
+		f = fopen(HIGHSCORE_PATH, "r+");
 		fscanf(f, "%d", &high);
 		fclose(f);
 		f = NULL; // always null pointers
 
 		if (lData->score > high) {
-			f = fopen("/home/sam/Documents/project/snake_game/.highscore.txt", "w+");
+			f = fopen(HIGHSCORE_PATH, "w+");
 			fprintf(f, "%d", lData->score);
 			new = 1;
 		}
@@ -210,7 +218,9 @@ void cleanup(Data* lData, Set available) {
 
 	high_score(lData);
 	free_list(lData);
+
 	set_destroy(available);
+	l.logging_destroy(l);
 
 	refresh();
 	getchar();
@@ -241,10 +251,6 @@ char *head_of_the_snake(Data* lData) {
 
 
 void gen_apple(Data* lData, Set available) {
-
-	// Node* current = lData->head->next;
-	// int max_y, max_x;
-	// getmaxyx(stdscr, max_y, max_x);
 
 	int* vals = set_random(available);
 
@@ -332,7 +338,7 @@ void move_snake(Data* lData, Set available) {
 	mvprintw(current->y_cord, current->x_cord, head);
 
 	// Remove new head pos from aval
-	set_remove(available, x, y);
+	set_remove(available, current->x_cord, current->y_cord);
 
 	if (current->x_cord == lData->x_apple && current->y_cord == lData->y_apple) {
 		grow_snake(lData);
@@ -370,6 +376,8 @@ void move_snake(Data* lData, Set available) {
 
 		lData->tail->x_cord = x;
 		lData->tail->y_cord = y;
+	} else {
+		set_add(available, lData->head->x_cord, lData->head->y_cord);
 	}
 
 	current = lData->head->next;
@@ -395,7 +403,7 @@ void snake_sleep(Data* lData, int max_x, int max_y, int speed) {
 		usleep(time);
 	} else {
 		time = speed / max_x;
-		usleep(time); //37500
+		usleep(time);
 	}
 }
 
@@ -423,7 +431,8 @@ int collion(Data* lData, int past_x, int past_y) {
 	Node* head = lData->head;
 	Node* current = lData->head->next;
 
-	getmaxyx(stdscr, max_y, max_x); // get again incase window was resized
+	// get again incase window was resized
+	getmaxyx(stdscr, max_y, max_x);
 
 	while (current != NULL) {
 
@@ -437,10 +446,10 @@ int collion(Data* lData, int past_x, int past_y) {
 		current = current->next;
 	}
 
+	// check if the snake has gone out of bounds or eaten itself
 	return lData->head->x_cord >= max_x || lData->head->x_cord < 0 ||
-		lData->head->y_cord >= max_y || lData->head->y_cord < 0 ||
-		backwards(lData, past_x, past_y);
-		// check if the snake has gone out of bounds or eaten itself
+		   lData->head->y_cord >= max_y || lData->head->y_cord < 0 ||
+		   backwards(lData, past_x, past_y);
 }
 
 int screen_init(int max_x, int max_y) {
@@ -508,6 +517,12 @@ int main() {
 	wbkgd(stdscr, COLOR_PAIR(BACKGROUND_COLOR));
 	nodelay(stdscr, true);
 
+	// Init logging
+	logging_create(&l, LOG_PATH);
+
+	sprintf(l.log_str, "Max x: %d, Max y : %d\n", max_x, max_y);
+	l.logging(l);
+
 	// Make the snake
 	Data* lData = create_snake(max_x, max_y);
 
@@ -521,8 +536,14 @@ int main() {
 		}
 	}
 
+	sprintf(l.log_str, "Starting...Set size: %d, total: %d\n", *available.size, max_x * max_y);
+	l.logging(l);
+
 	// Remove the starting pos
-	// set_remove(available, lData->head->x_cord, lData->head->y_cord);
+	set_remove(available, lData->head->x_cord, lData->head->y_cord);
+
+	sprintf(l.log_str, "Set size: %d, snake size: %d\n", *available.size, lData->score);
+	l.logging(l);
 
 	gen_apple(lData, available);
 	mvprintw(lData->y_apple, lData->x_apple, "@");
@@ -544,8 +565,9 @@ int main() {
 			return 0;
 		}
 		snake_sleep(lData, max_x, max_y, speed);
+
+		sprintf(l.log_str, "Set size: %d, snake size: %d\n", *available.size, lData->score);
+		l.logging(l);
 	}
 }
-
-//todo:Add optimizatkion
 
