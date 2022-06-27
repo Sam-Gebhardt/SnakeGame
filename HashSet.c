@@ -44,13 +44,16 @@ void set_destroy(Set s) {
 // Add
 void set_add(Set s, int x, int y) {
     int hash = (HASH * x + y) % s.capacity;
+
+    if (hash < 0)
+        return;
+
     (*s.size)++;
 
     SetNode* cur = s.buckets[hash];
     SetNode* new = (SetNode*)malloc(sizeof(SetNode));;
 
     if (cur == NULL) {
-        // cur = new;
         s.buckets[hash] = new;
         new->next = NULL;
 
@@ -84,6 +87,9 @@ void set_add(Set s, int x, int y) {
 // Remove
 void set_remove(Set s, int x, int y) {
     int hash = (HASH * x + y) % s.capacity;
+
+    if (hash < 0)
+        return;
 
     SetNode* cur = s.buckets[hash];
     SetNode* prev = NULL;
