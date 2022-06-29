@@ -233,7 +233,7 @@ void cleanup(Data* lData, Set available) {
 char *head_of_the_snake(Data* lData) {
 	char *head;
 
-	switch(lData->head->x_direction){
+	switch(lData->x_direction){
 		case 1:
 			head = ">";
 			break;
@@ -241,7 +241,7 @@ char *head_of_the_snake(Data* lData) {
 			head = "<";
 			break;
 	}
-	switch(lData->head->y_direction) {
+	switch(lData->y_direction) {
 		case 1:
 			head = "v";
 			break;
@@ -264,10 +264,10 @@ void gen_apple(Data* lData, Set available) {
 
 int backwards(Data* lData, int past_x, int past_y) {
 
-	if (lData->head->x_direction * -1 == past_x && past_x != 0)
+	if (lData->x_direction * -1 == past_x && past_x != 0)
 		return 1;
 
-	if (lData->head->y_direction * -1 == past_y && past_y != 0 )
+	if (lData->y_direction * -1 == past_y && past_y != 0 )
 		return 1;
 
 	return 0;
@@ -279,26 +279,26 @@ int get_move(Data* lData, int move) {
 	switch(move) {
 		case 'w':
 		case KEY_UP:
-			lData->head->x_direction = 0;
-			lData->head->y_direction = -1;
+			lData->x_direction = 0;
+			lData->y_direction = -1;
 			change = 1;
 			break;
 		case 's':
 		case KEY_DOWN:
-			lData->head->x_direction = 0;
-			lData->head->y_direction = 1;
+			lData->x_direction = 0;
+			lData->y_direction = 1;
 			change = 1;
 			break;
 		case 'd':
 		case KEY_RIGHT:
-			lData->head->x_direction = 1;
-			lData->head->y_direction = 0;
+			lData->x_direction = 1;
+			lData->y_direction = 0;
 			change = 1;
 			break;
 		case 'a':
 		case KEY_LEFT:
-			lData->head->x_direction = -1;
-			lData->head->y_direction = 0;
+			lData->x_direction = -1;
+			lData->y_direction = 0;
 			change = 1;
 			break;
 		case ESC:
@@ -317,8 +317,8 @@ void move_snake(Data* lData, Set available) {
 	int x = lData->head->x_cord, y = lData->head->y_cord;
 	int max_x = getmaxx(stdscr);
 
-	current->x_cord += current->x_direction;
-	current->y_cord += current->y_direction;
+	current->x_cord += lData->x_direction;
+	current->y_cord += lData->y_direction;
 
 	attron(COLOR_PAIR(APPLE_COLOR));
 	mvprintw(lData->y_apple, lData->x_apple, "@");
@@ -390,7 +390,7 @@ void snake_sleep(Data* lData, int max_x, int max_y, int speed) {
 	if (speed == 0) // default case is 3.6 seconds
 		speed = 3600000;
 
-	if (lData->head->y_direction) {
+	if (lData->y_direction) {
 		time = speed / max_y;
 		usleep(time);
 	} else {
@@ -403,8 +403,8 @@ void grow_snake(Data* lData) {
 
 	Node* new = (Node*)malloc(sizeof(Node));
 
-	new->x_cord = lData->head->x_cord - lData->head->x_direction;
-	new->y_cord = lData->head->y_cord - lData->head->y_direction;
+	new->x_cord = lData->head->x_cord - lData->x_direction;
+	new->y_cord = lData->head->y_cord - lData->y_direction;
 
 	// Add to snake after head
 	new->next = lData->head->next;
@@ -482,8 +482,8 @@ Data* create_snake(int max_x, int max_y) {
 	lData->tail = head;
 	lData->score = 0;
 
-	head->x_direction = 1;
-	head->y_direction = 0;
+	lData->x_direction = 1;
+	lData->y_direction = 0;
 
 	head->x_cord = max_x / 2;
 	head->y_cord = max_y / 2;
@@ -545,7 +545,7 @@ int main() {
 	while(1) {
 
 		int move = getch();
-		int past_x = lData->head->x_direction, past_y = lData->head->y_direction;
+		int past_x = lData->x_direction, past_y = lData->y_direction;
 
 		int change = get_move(lData, move);
 

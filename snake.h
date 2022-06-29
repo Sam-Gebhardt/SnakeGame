@@ -8,8 +8,8 @@ typedef struct node {
 	struct node *prev;
 	int x_cord;
 	int y_cord;
-	int x_direction;
-	int y_direction;
+	// int x_direction;
+	// int y_direction;
     /*
     A linked list node that serves as the snake. Holds the current location on the
     screen in x/y_cords and the current direction the node is moving in x/y_direction.
@@ -19,6 +19,8 @@ typedef struct node {
 typedef struct data {
 	struct node *head;
 	struct node *tail;
+    int x_direction;
+	int y_direction;
 	int score;
 	int x_apple;
 	int y_apple;
@@ -62,9 +64,10 @@ void custom_color(void);
     Gets user input for setting custom colors or defaults to normal color pairs.
     */
 
+
 int custom_speed(void);
     /*
-
+    Changes the speed based on user input.
     */
 
 
@@ -150,6 +153,4 @@ Data* create_snake(int max_x, int max_y);
 
 
 // function declerations
-
-
 #endif // SNAKE_H_
