@@ -21,6 +21,9 @@ Basic terminal snake game
 #define TEXT_COLOR 3
 #define BACKGROUND_COLOR 4
 
+// escape key, no ncurses defination provided
+#define ESC 27
+
 // Path to highscore file
 #define HIGHSCORE_PATH "/home/sam/Documents/project/snake_game/.highscore.txt"
 
@@ -270,14 +273,6 @@ int backwards(Data* lData, int past_x, int past_y) {
 	return 0;
 }
 
-void update_direction(Data* lData) {
-
-	if (lData->head->next == NULL)
-		return;
-
-	lData->head->next->x_direction = lData->head->x_direction;
-	lData->head->next->y_direction = lData->head->y_direction;
-}
 
 int get_move(Data* lData, int move) {
 	int change = 0;
@@ -306,7 +301,7 @@ int get_move(Data* lData, int move) {
 			lData->head->y_direction = 0;
 			change = 1;
 			break;
-		case 27:  // esc
+		case ESC:
 			return -1;
 	}
 	return change;
@@ -318,10 +313,9 @@ void move_snake(Data* lData, Set available) {
 	clear();
 	char *head = head_of_the_snake(lData);
 	Node* current = lData->head;
-	int x = lData->head->x_cord, y = lData->head->y_cord;
-	int max_x;
 
-	max_x = getmaxx(stdscr);
+	int x = lData->head->x_cord, y = lData->head->y_cord;
+	int max_x = getmaxx(stdscr);
 
 	current->x_cord += current->x_direction;
 	current->y_cord += current->y_direction;
@@ -344,7 +338,7 @@ void move_snake(Data* lData, Set available) {
 		grow_snake(lData);
 		set_remove(available, lData->tail->x_cord, lData->tail->y_cord);
 		gen_apple(lData, available);
-	}
+	} else {
 
 	if (lData->score > 1) {
 
@@ -367,9 +361,6 @@ void move_snake(Data* lData, Set available) {
 		tmp->x_cord = x;
 		tmp->y_cord = y;
 
-		tmp->x_direction = lData->head->x_direction;
-		tmp->y_direction = lData->head->y_direction;
-
 	} else if (lData->score == 1) {
 		// Add old head pos back into aval
 		set_add(available, lData->tail->x_cord, lData->tail->y_cord);
@@ -378,6 +369,7 @@ void move_snake(Data* lData, Set available) {
 		lData->tail->y_cord = y;
 	} else {
 		set_add(available, lData->head->x_cord, lData->head->y_cord);
+	}
 	}
 
 	current = lData->head->next;
@@ -410,19 +402,21 @@ void snake_sleep(Data* lData, int max_x, int max_y, int speed) {
 void grow_snake(Data* lData) {
 
 	Node* new = (Node*)malloc(sizeof(Node));
-	new->x_cord = lData->tail->x_cord - lData->tail->x_direction;
-	new->y_cord = lData->tail->y_cord - lData->tail->y_direction;
 
-	new->x_direction = lData->tail->x_direction;
-	new->y_direction = lData->tail->y_direction;
+	new->x_cord = lData->head->x_cord - lData->head->x_direction;
+	new->y_cord = lData->head->y_cord - lData->head->y_direction;
 
-	new->next = NULL;
-	new->prev = lData->tail;
+	// Add to snake after head
+	new->next = lData->head->next;
+	new->prev = lData->head;
 
-	lData->tail->next = new;
-	lData->tail = new;
-	lData->score ++;
-
+	if (lData->score > 0) {
+		lData->head->next->prev = new;
+	} else {
+		lData->tail = new;
+	}
+	lData->head->next = new;
+	lData->score++;
 }
 
 int collion(Data* lData, int past_x, int past_y) {
@@ -554,8 +548,6 @@ int main() {
 		int past_x = lData->head->x_direction, past_y = lData->head->y_direction;
 
 		int change = get_move(lData, move);
-
-		update_direction(lData);
 
 		move_snake(lData, available);
 
