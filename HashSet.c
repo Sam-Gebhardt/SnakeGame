@@ -10,12 +10,9 @@
 // Create
 Set set_create(int buckets) {
     Set s;
-    SetNode** b = malloc(sizeof(SetNode) * buckets);
-    s.size = malloc(sizeof(int));
 
-    for (int i = 0; i < buckets; i++) {
-        b[i] = NULL;
-    }
+    SetNode** b = calloc(sizeof(SetNode), buckets);
+    s.size = malloc(sizeof(int));
 
     s.buckets = b;
     s.capacity = buckets;
@@ -48,39 +45,27 @@ void set_add(Set s, int x, int y) {
     if (hash < 0)
         return;
 
-    (*s.size)++;
-
     SetNode* cur = s.buckets[hash];
-    SetNode* new = (SetNode*)malloc(sizeof(SetNode));;
+    SetNode* new = (SetNode*)malloc(sizeof(SetNode));
+    int* vals = malloc(sizeof(int) * 2);
 
     if (cur == NULL) {
         s.buckets[hash] = new;
-        new->next = NULL;
-
-        int* vals = malloc(sizeof(int) * 2);
-        vals[0] = x;
-        vals[1] = y;
-        new->vals = vals;
-        return;
 
     } else {
 
-        while (cur->next != NULL) {
-            if ((long)new == 10) {
-                return;
-            }
+        while (cur->next != NULL)
             cur = cur->next;
-        }
 
+        cur->next = new;
     }
 
-    cur->next = new;
     new->next = NULL;
 
-    int* vals = malloc(sizeof(int) * 2);
     vals[0] = x;
     vals[1] = y;
     new->vals = vals;
+    (*s.size)++;
 }
 
 
