@@ -8,8 +8,6 @@ typedef struct node {
 	struct node *prev;
 	int x_cord;
 	int y_cord;
-	// int x_direction;
-	// int y_direction;
     /*
     A linked list node that serves as the snake. Holds the current location on the
     screen in x/y_cords and the current direction the node is moving in x/y_direction.
@@ -133,7 +131,7 @@ void grow_snake(Data* lData);
 	*/
 
 
-int collison(Data* lData, int past_x, int past_y);
+int collison(Data* lData);
 	/*
     Detects if the snake has attempted to eat itself, or go out of bounds.
 	*/
